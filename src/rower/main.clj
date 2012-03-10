@@ -1,22 +1,30 @@
 (ns rower.main
-  (:require [rower.s4    :as s4]
-            [rower.stats :as stats]))
+  (:use [clojure.tools.cli :only [cli]])
+  (:require [rower.s4     :as s4]
+            [rower.stats  :as stats]
+            [rower.stdout :as stdout]
+            [cheshire.core :as json])
+  (:gen-class))
 
 (defn start-publishing
-  [events]
-  (stats/start println)
+  [handler events]
+  (stats/start handler)
   (doseq [e events]
     (stats/handle e)))
 
 (defn handle-events
-  [events]
+  [handler events]
   (loop [events events]
-    (println (first events))
     (if (contains? #{:ping :unknown} (:type (first events)))
       (recur (rest events))
-      (start-publishing events))))
+      (start-publishing handler events))))
 
 (defn -main
   [& args]
-  (println "starting up")
-  (s4/with-events handle-events))
+  (let [[options _ banner] (cli args
+                                ["--ui" "console or web"
+                                 :default :console
+                                 :parse-fn keyword])]
+    (s4/initialize! {:path "/dev/tty.usbmodemfd121"
+                     :baud 19200})
+    (s4/start println)))

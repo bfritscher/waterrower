@@ -35,7 +35,7 @@
 
 (defmulti handle :type)
 
-(defmethod handle :distance
+(defmethod handle :pulse
   [{value :value}]
   (dosync
    (alter sample-state update-in [:meters] + value)
@@ -81,13 +81,9 @@
               :total-strokes     strokes
               :total-s           total-s
               :total-500-split   total-500-split
-              :total-2k-split    (* 4.0 total-500-split)
-              :current-m         current-m
-              :current-strokes   current-strokes
               :current-mps       current-mps
               :current-spm       current-spm
-              :current-500-split current-500-split
-              :current-2k-split  (* 4.0 current-500-split)})))
+              :current-500-split current-500-split})))
 
 (defn start
   [handler]

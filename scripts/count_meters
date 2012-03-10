@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+grep '^P' $1 | grep -v PING | cut -c 2-3 | xargs -I{} echo "0x{}" | xargs printf "%d\n" | awk '{ sum+=$1 } END {print sum}'
