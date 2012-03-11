@@ -8,13 +8,39 @@
   [new-config]
   (reset! config new-config))
 
+(def commands
+  {:start             "USB"
+   :reset             "RESET"
+   :exit              "EXIT"
+   :info              "IV?"
+   :intensity-mps     "DIMS"
+   :intensity-mph     "DIMPH"
+   :intensity-500     "DI500"
+   :intensity-2km     "DI2KM"
+   :intensity-watts   "DIWA"
+   :intensity-cal-ph  "DICH"
+   :intensity-avg-mps "DAMS"
+   :intensity-avg-mph "DAMPH"
+   :intensity-avg-500 "DA500"
+   :intensity-avg-2km "DA2KM"
+   :distance-meters   "DDME"
+   :distance-miles    "DDMI"
+   :distance-km       "DDKM"
+   :distance-strokes  "DDST"})
+
+(def memory-map ;; for some reason most dont work, but these do?
+  {"054" {:type :total-distance-dec :size :single}
+   "055" {:type :total-distance-m   :size :double}
+   "140" {:type :total-strokes      :size :double}})
+
+(defn send-command
+  [cmd port]
+  (let [cmd (if (keyword? cmd) (get commands cmd) cmd)]
+    (write port (.getBytes (str cmd "\r\n")))))
+
 (defn whitespace?
   [c]
   (contains? #{\return \newline} c))
-
-(defn hex->decimal
-  [cs]
-  (Integer/valueOf (apply str cs) 16))
 
 (defn event 
   [type & [value]]
@@ -28,74 +54,108 @@
 (def error        (partial event :error))
 (def model        (partial event :model))
 
+(defn read-reply
+  [s]
+  (if-let [{type :type size :size} (get memory-map (subs s 3 6))]
+    (event type (condp = size
+                  :single (Integer/valueOf (subs s 6 8) 16)
+                  :double (Integer/valueOf (subs s 6 10) 16)
+                  :triple (Integer/valueOf (subs s 6 12) 24)))
+    (.println *err* (str "cannot read reply from " s))))
+
 (defn event-for
   [cs]
   (let [cmd (apply str cs)]
     (cond
-     (= "PING" cmd)          (ping)
-     (= \P (first cmd))      (pulse (hex->decimal (subs cmd 1)))
-     (= "SS"   cmd)          (stroke-start)
-     (= "SE"   cmd)          (stroke-end)
-     (= "OK"   cmd)          (ok)
-     (= "ERROR" cmd)         (error)
-     (= "IV" (subs cmd 0 2)) (model (subs cmd 2))
-     :else                   (event :unknown cs))))
+     (= "PING"  cmd)            (ping)
+     (= \P      (first cmd))    (pulse (Integer/valueOf (subs cmd 1) 16))
+     (= "SS"    cmd)            (stroke-start)
+     (= "SE"    cmd)            (stroke-end)
+     (= "OK"    cmd)            (ok)
+     (= "IV"    (subs cmd 0 2)) (model (subs cmd 2))
+     (= "IDS"   (subs cmd 0 3)) (read-reply cmd)
+     (= "IDD"   (subs cmd 0 3)) (read-reply cmd)
+     (= "IDT"   (subs cmd 0 3)) (read-reply cmd)
+     (= "ERROR" cmd)            (error)
+     :else                      (event :unknown cmd))))
 
-(defn bytes-seq
-  [input]
-  (lazy-seq
-   (when-let [c (.read input)]
-     (.print *err* c)
-     (.flush *err*)
-     (cons c (bytes-seq input)))))
+(defn request-data
+  [port]
+  (doseq [[addr {size :size}] memory-map]
+    (let [cmd (condp = size
+                :single "IRS"
+                :double "IRD"
+                :triple "IRT")]
+      (command (str cmd addr) port))))
 
-(defn lazy-events
-  [chars]
-  (when (seq chars)
-    (lazy-seq
-     (let [[f r] (split-with (complement whitespace?) chars)
-           event (event-for f)]
-       (cons event (lazy-events (drop-while whitespace? r)))))))
+(defn pulse? [e] (= :pulse (:type e)))
 
-(defn events-seq
-  [input]
-  (lazy-events (map char (bytes-seq input))))
+(defn start-capturing
+  [port on-event]
+  (let [input (:in-stream port)]
+    (loop [buffer []
+           pulses 0] ;; request data every 10 pulses
+      (let [c (char (.read input))]
+        (if-not (whitespace? c)
+          (recur (conj buffer c) pulses)
+          (if (= \newline c)
+            (let [event         (event-for buffer)
+                  next-pulses   (if (pulse? event) (inc pulses) pulses)
+                  send-request? (> next-pulses 10)]
+              (on-event event)
+              (when send-request?
+                (request-data port))
+              (recur [] (if send-request? 0 next-pulses)))
+            (recur buffer pulses)))))))
 
-(defn send-command
-  [cmd port]
-  (write port (.getBytes (str cmd "\r\n"))))
+(def workout-map
+  {:distance "WSI"
+   :duration "WSU"})
 
-(def send-start             (partial send-command "USB"))
-(def send-exit              (partial send-command "EXIT"))
+(def unit-map
+  {:meters  1
+   :miles   2
+   :km      3
+   :strokes 4})
+
+(defn workout->command
+  [{:keys [type units value]}]
+  (str (get workout-map type) (get unit-map units) (Integer/toHexString value)))
 
 (defn start
-  [on-event]
+  [workout on-event]
   (let [{:keys [path baud]} @config]
     (let [port (open path baud)]
       (try
-        (let [input (:in-stream port)]
-          (send-start port)
-          (doseq [event (events-seq input)]
-            (on-event event)))
+        (send-command :reset port)
+        (send-command (workout->command workout) port)
+        (send-command :start port)
+        (start-capturing port on-event)
+        port
         (catch Exception e
-          (send-exit port)
+          (send-command :exit port)
           (close port)
           (throw e))))))
 
+(defn stop
+  [port]
+  (send-command :exit port)
+  (close port))
 
-;; (def send-reset             (partial send-command "RESET"))
-;; (def send-info              (partial send-command "IV?"))
-;; (def send-intensity-mps     (partial send-command "DIMS"))
-;; (def send-intensity-mph     (partial send-command "DIMPH"))
-;; (def send-intensity-500     (partial send-command "DI500"))
-;; (def send-intensity-2km     (partial send-command "DI2KM"))
-;; (def send-intensity-watts   (partial send-command "DIWA"))
-;; (def send-intensity-cal-ph  (partial send-command "DICH"))
-;; (def send-intensity-avg-mps (partial send-command "DAMS"))
-;; (def send-intensity-avg-mph (partial send-command "DAMPH"))
-;; (def send-intensity-avg-500 (partial send-command "DA500"))
-;; (def send-intensity-avg-2km (partial send-command "DA2KM"))
-;; (def send-distance-meters   (partial send-command "DDME"))
-;; (def send-distance-miles    (partial send-command "DDMI"))
-;; (def send-distance-km       (partial send-command "DDKM"))
-;; (def send-distance-strokes  (partial send-command "DDST"))
+(comment
+  ;; example workout
+  (workout->command {:type  :distance
+                     :units :meters
+                     :value 8000})
+
+  )
+
+   ;;"08a" {:type :total-kcal         :size :triple}
+   ;;"1A0" {:type :heart-rate         :size :single}
+   ;;"14a" {:type :avg-distance-cmps  :size :double}
+   ;;"1e0" {:type :display-sec-dec    :size :single}
+   ;; "1e1" {:type :display-sec        :size :single}
+   ;;"1e2" {:type :display-min        :size :single}
+   ;; "1e3" {:type :display-hr         :size :single}
+   ;;"1e8" {:type :total-workout-time :size :double}
+   ;; "1ea" {:type :total-workout-mps  :size :double}

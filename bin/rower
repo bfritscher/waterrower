@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-java -Djava.library.path=./native/macosx/x86_64 -cp "lib/*":rower-1.0.0-SNAPSHOT.jar rower.main "$@"
+java -Djava.library.path=./native/macosx/x86_64 -cp "lib/*":src:resources clojure.main scripts/dev.clj "$@"
+#java -Djava.library.path=./native/macosx/x86_64 -cp "lib/*":rower-1.0.0-SNAPSHOT.jar rower.main "$@"

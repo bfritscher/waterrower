@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+java -Djava.library.path=./native/macosx/x86_64 -cp "lib/*":src:resources clojure.main

@@ -27,4 +27,6 @@
                                  :parse-fn keyword])]
     (s4/initialize! {:path "/dev/tty.usbmodemfd121"
                      :baud 19200})
-    (s4/start println)))
+    (s4/start {:type  :distance
+               :units :km
+               :value 8} println)))
