@@ -1,20 +1,21 @@
 (ns rower.www
-  (:require [cheshire.core :as json])
+  (:require [cheshire.core :as json]
+            [rower.s4 :as s4])
   (:import [org.webbitserver WebServer WebServers WebSocketHandler]
            [org.webbitserver.handler StaticFileHandler]))
 
-(defn on-message
-  [con data]
-  (let [data (-> data (json/decode true))]
-    (.send con (json/encode {:received data}))))
+(defn send-event
+  [con event]
+  (.send con (json/encode event)))
 
 (defn run-webbit
-  []
+  [workout]
   (doto (WebServers/createWebServer 3000)
-    (.add "/"
+    (.add "/rower"
           (proxy [WebSocketHandler] []
-            (onOpen [c] (println "open"))
-            (onClose [c] (println "close"))
-            (onMessage [c data] (on-message c data))))
-    (.add (StaticFileHandler. "."))
+            (onOpen [c]
+              (s4/start workout (partial send-event c)))
+            (onClose [c] )
+            (onMessage [c data] )))
+    (.add (StaticFileHandler. "./resources/public"))
     (.start)))

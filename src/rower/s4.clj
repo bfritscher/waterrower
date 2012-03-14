@@ -1,5 +1,6 @@
 (ns rower.s4
-  (:require [serial-port :as sp] [clojure.string :as string]))
+  (:require [serial-port :as sp]
+            [clojure.string :as string]))
 
 (def commands
   {:start             "USB"
@@ -68,7 +69,7 @@
 
 (defn event 
   [type & [value]]
-  {:type type :value value})
+  {:type type :value value :at (System/currentTimeMillis)})
 
 (def ping         (partial event :ping))
 (def pulse        (partial event :pulse))
@@ -119,8 +120,6 @@
   (let [input (:in-stream port)]
     (loop [buffer []]
       (let [c (char (.read input))]
-        (.print *err* c)
-        (.flush *err*)
         (if-not (whitespace? c)
           (recur (conj buffer c))
           (if (= \newline c)
@@ -159,5 +158,6 @@
             (stop port)
             (throw e))))
       (close [_] (stop port)))))
+
 
 

@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <title>Rower</title>
+    <link media="screen" href="main.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+
+    <div id="hud">
+      <dl>
+        <dt>stroke rate</dt>
+        <dd><span id="stroke-rate">00</span></dd>
+      </dl>
+      <dl id="duration">
+        <dt>time</dt>
+        <dd><span id="hour">00</span>:<span id="min">00</span>:<span id="sec">00</span>:<span id="sec-dec">0</span></dd>
+      </dl>
+      <dl id="five-hundred">
+        <dt>/500m</dt>
+        <dd><span id="avg-500m-min">00</span>:<span id="avg-500m-sec">00</span></dd>
+      </dl>
+      <dl id="meters-sec">
+        <dt>meters/sec</dt>
+        <dd><span id="avg-mps">0.00</span></dd>
+      </dl>
+      <dl id="total-distance">
+        <dt>distance(m)</dt>
+        <dd><span id="total-distance-m">00000</span>.<span id="total-distance-dec">0</span></dd>
+      </dl>
+    </div>
+
+    <div id="messages"></div>
+
+    <script src="rower.js"></script>
+    <script>
+      Rower.init();
+    </script>
+  </body>
+</html>
