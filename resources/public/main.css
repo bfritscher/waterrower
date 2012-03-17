@@ -1,37 +1,41 @@
 body {
-    background: #000;
-    font-size: 5em;
-    padding: 20px;
-    color: #fff;
+  font-family: helvetica, arial;
+  background: #232;
+  font-size: 6em;
+  padding: 20px;
+  color: #fff;
 }
 
-#hud {
-    width:
+#main {
+  float: left;
+  width: 50%;
+}
+
+#sub {
+  float: right;
+  width: 50%;
+}
+
+.pad {
+  padding: 10px;
 }
 
 dl {
-    float: left;
+  float: left;
+  clear: left;
+  margin: 0;
 }
 
 dt {
-    font-size: large;
-    margin: 0;
-    text-align: center;
-    color: #ccc;
+  font-size: large;
+  margin: 0;
+  color: #ccc;
 }
 
 dd {
-    margin: 0 20px;
+  margin: 0 0 10px 0;
 }
 
 #five-hundred dd {
-    font-size: 1.5em;
-}
-
-#left {
-    float: left;
-}
-
-#right {
-    float: right;
+  font-size: 1.5em;
 }

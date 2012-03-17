@@ -14,7 +14,8 @@
     (.add "/rower"
           (proxy [WebSocketHandler] []
             (onOpen [c]
-              (s4/start workout (partial send-event c)))
+              (s4/add-handler workout (partial send-event c))
+              (s4/start workout))
             (onClose [c] )
             (onMessage [c data] )))
     (.add (StaticFileHandler. "./resources/public"))

@@ -29,7 +29,7 @@
    "05B" {:type :clock-countdown       :size :double :base 16}
    "140" {:type :total-strokes         :size :double :base 16}
    "1A9" {:type :stroke-rate           :size :single :base 16}
-   "08A" {:type :total-kcal            :size :triple :base 24}
+   "08A" {:type :total-kcal            :size :triple :base 16}
    "1A0" {:type :heart-rate            :size :single :base 16}
    "14A" {:type :avg-distance-cmps     :size :double :base 16}
    "1E0" {:type :display-sec-dec       :size :single :base 10}
@@ -116,7 +116,7 @@
   (recur port))
 
 (defn start-capturing
-  [port on-event]
+  [port handlers]
   (let [input (:in-stream port)]
     (loop [buffer []]
       (let [c (char (.read input))]
@@ -124,12 +124,14 @@
           (recur (conj buffer c))
           (if (= \newline c)
             (let [event (event-for buffer)]
-              (on-event event)
+              (doseq [h handlers]
+                (h event))
               (recur []))
             (recur buffer)))))))
 
 (defprotocol IWorkout
-  (start [this on-event])
+  (add-handler [this handler])
+  (start [this])
   (close [this]))
 
 (defn stop
@@ -144,14 +146,17 @@
 (defn new-workout
   [config workout]
   (let [{:keys [path baud]} config
-        port (sp/open path baud)]
+        port (sp/open path baud)
+        handlers (atom [])]
     (reify IWorkout
-      (start [_ on-event]
+      (add-handler [_ handler]
+        (swap! handlers conj handler))
+      (start [_]
         (try
           (send-command :reset port)
           (send-command (workout->command workout) port)
           (send-command :start port)
-          (spawn (start-capturing port on-event))
+          (spawn (start-capturing port @handlers))
           (spawn (start-requesting port))
           port
           (catch Exception e
