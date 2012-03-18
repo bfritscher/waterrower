@@ -1,6 +1,20 @@
-var Rower = (function() {
+var Rower = {}; 
+
+Rower.ui = (function($) {
+  var startLinkClick = function(f) {
+    return $("#start-workout").click(f);
+  };
+
+  var stopLinkClick = function(f) {
+    return $("#stop-workout").click(f);
+  }
+
+  var getDistance = function() {
+    return parseInt($("#distance").val());
+  };
+
   var setContents = function(id, value) {
-    document.getElementById(id).innerHTML = value;
+    $("#" + id).text(value);
   };
 
   var setNumber = function(id, width, n) {
@@ -14,53 +28,102 @@ var Rower = (function() {
     return n;
   };
 
-  var startWorkout = function() {
-    console.log("opening websocket");
-    var ws = new WebSocket('ws://' + document.location.host + '/rower');
+  return {
+    startLinkClick: startLinkClick,
+    stopLinkClick: stopLinkClick,
+    getDistance: getDistance,
+    setHour: function(v) {
+      setNumber('hour', 2, v);
+    },
+    setMin: function(v) {
+      setNumber('min', 2, v);
+    },
+    setSec: function(v) {
+      setNumber('sec', 2, v);
+    },
+    setSecDec: function(v) {
+      setNumber('sec-dec', 1, v);
+    },
+    setTotalDistance: function(v) {
+      setNumber('total-distance-m', 5, v);
+    },
+    setMetersRemaining: function(v) {
+      setNumber('total-meters-remaining', 5, v);
+    },
+    setStrokeRate: function(v) {
+      setNumber('stroke-rate', 2, v);
+    },
+    setTotalStrokes: function(v) {
+      setContents('total-strokes', v);
+    },
+    setAverageMps: function(v) {
+      setContents('avg-mps', v);
+    },
+    setAverageFiveHundredSplit: function(m, s) {
+      setNumber('avg-500m-min', 2, m);
+      setNumber('avg-500m-sec', 2, s);
+    },
+    setKCal: function(v) {
+      setNumber("kcal", 4, v);
+    },
+    status: function(msg) {
+      setContents("status", msg);
+    },
+  };
 
-    var commands = {
-      "display-hr": function(value) {
-        setNumber('hour', 2, value);
-      },
-      "display-min": function(value) {
-        setNumber('min', 2, value);
-      },
-      "display-sec": function(value) {
-        setNumber('sec', 2, value);
-      },
-      "display-sec-dec": function(value) {
-        setNumber('sec-dec', 1, value);
-      },
-      "total-distance-m": function(value) {
-        setNumber('total-distance-m', 5, value);
-      },
-      "stroke-rate": function(value) {
-        setNumber('stroke-rate', 2, value);
-      },
-      "total-strokes": function(value) {
-        setContents('total-strokes', value);
-      },
-      "avg-distance-cmps": function(value) {
-        if (value > 0) {
-          setContents('avg-mps', (value / 100).toFixed(2));
-          var totalSeconds = (500 / (value / 100));
-          setNumber('avg-500m-min', 2, Math.floor(totalSeconds / 60).toFixed(0));
-          setNumber('avg-500m-sec', 2, Math.floor(totalSeconds % 60));
-        }
-      },
-      "total-kcal": function(value) {
-        if (value > 0) {
-          setNumber("kcal", 4, (value / 1000).toFixed(2));
-        }
+}(jQuery));
+
+Rower.controller = (function($) {
+  var ui = Rower.ui;
+  var ws;
+  var distance = 0;
+
+  var commands = {
+    "display-hr":       ui.setHour,
+    "display-min":      ui.setMin,
+    "display-sec":      ui.setSec,
+    "display-sec-dec":  ui.setSecDec,
+    "total-distance-m": function(v) {
+      ui.setTotalDistance(v);
+      ui.setMetersRemaining(distance - v);
+    },
+    "stroke-rate":      ui.setStrokeRate,
+    "total-strokes":    ui.setTotalStrokes,
+    "avg-distance-cmps": function(v) {
+      if (v > 0) {
+        ui.setAverageMps((v / 100).toFixed(2));
+        var totalSeconds = (500 / (v / 100));
+        var minutes = Math.floor(totalSeconds / 60).toFixed(0);
+        var seconds = Math.floor(totalSeconds % 60);
+        ui.setAverageFiveHundredSplit(minutes, seconds);
+      }
+    },
+    "total-kcal": function(value) {
+      if (value > 0) {
+        ui.setKCal((value / 1000).toFixed(2));
       }
     }
+  };
 
-    ws.onopen = function() {
-      console.log("connected");
-    };
-    ws.onclose = function() {
-      console.log("close");
-    };
+  var startWorkout = function() {
+    distance = ui.getDistance();
+    var data = JSON.stringify({type: "start-workout", 
+                               data: {distance: distance}});
+    console.log("starting: " + data);
+    ui.setMetersRemaining(distance);
+    ws.send(data);
+  };
+
+  var stopWorkout = function() {
+    console.log("stopping workout");
+    ws.send(JSON.stringify({type: "stop-workout"}));
+  };
+
+  var init = function() {
+    ui.status("connecting...");
+    ws = new WebSocket('ws://' + document.location.host + '/rower');
+    ws.onopen  = function() { ui.status("connected"); }
+    ws.onclose = function() { ui.status("disconnected") };
     ws.onmessage = function(msg) {
       data = JSON.parse(msg.data);
       command = commands[data.type];
@@ -68,9 +131,11 @@ var Rower = (function() {
         command(data.value);
       }
     };
+    ui.startLinkClick(startWorkout);
+    ui.stopLinkClick(stopWorkout);
   };
 
   return {
-    startWorkout: startWorkout
+    init: init    
   }
-})();
+})(jQuery);

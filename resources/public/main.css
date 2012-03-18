@@ -1,23 +1,78 @@
 body {
   font-family: helvetica, arial;
   background: #232;
-  font-size: 6em;
-  padding: 20px;
   color: #fff;
 }
 
-#main {
-  float: left;
-  width: 50%;
+.clearfix:after {
+  content: ".";
+  display: block;
+  clear: both;
+  visibility: hidden;
+  line-height: 0;
+  height: 0;
 }
 
-#sub {
-  float: right;
-  width: 50%;
+.clearfix {
+  display: inline-block;
+}
+
+a {
+  color: #fc0;
+  text-decoration: none;
 }
 
 .pad {
   padding: 10px;
+}
+
+#bar {
+  width: 100%;
+  background: #000;
+  line-height: 1.5em;
+}
+
+#bar dl {
+  float: none;
+}
+
+#bar ul {
+  float: left;
+}
+
+#bar li {
+  margin-left: 5px;
+  display: inline;
+}
+
+#start-workout {
+  color: #0f0;
+}
+
+#stop-workout {
+  color: #f00;
+}
+
+#status {
+  float: right;
+
+  padding: 2px 10px;
+}
+
+#content .pad {
+  padding: 20px;
+}
+
+#sub {
+  float: left;
+  width: 50%;
+  font-size: 6em;
+}
+
+#main {
+  float: right;
+  width: 50%;
+  font-size: 10em
 }
 
 dl {
@@ -28,14 +83,31 @@ dl {
 
 dt {
   font-size: large;
-  margin: 0;
+  float: right;
+  margin: 20px 0 0 10px;
   color: #ccc;
 }
 
 dd {
   margin: 0 0 10px 0;
+  float: left;
+}
+
+form dl {
+  float: none;
+}
+
+form dt {
+  float: left;
+  margin: 0 10px 0 0;
+  color: #ccc;
+  font-size: 1em;
+}
+
+form dd {
+  float: left;
 }
 
 #five-hundred dd {
-  font-size: 1.5em;
+
 }

@@ -151,7 +151,7 @@
     (reify IWorkout
       (add-handler [_ handler]
         (swap! handlers conj handler))
-      (start [_]
+      (start [this]
         (try
           (send-command :reset port)
           (send-command (workout->command workout) port)

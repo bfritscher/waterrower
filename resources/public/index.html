@@ -5,58 +5,66 @@
     <link media="screen" href="main.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
-
-    <div id="main">
+    <div id="bar" class="clearfix">
       <div class="pad">
-        <dl>
-          <dt>stroke rate/min</dt>
-          <dd><span id="stroke-rate">00</span></dd>
-        </dl>
-        <dl id="duration">
-          <dt>time</dt>
-          <dd><span id="hour">00</span>:<span id="min">00</span>:<span id="sec">00</span>:<span id="sec-dec">0</span></dd>
-        </dl>
-        <dl id="five-hundred">
-          <dt>/500m</dt>
-          <dd><span id="avg-500m-min">00</span>:<span id="avg-500m-sec">00</span></dd>
-        </dl>
-        <dl id="meters-sec">
-          <dt>meters/sec</dt>
-          <dd><span id="avg-mps">0.00</span></dd>
-        </dl>
-        <dl id="total-distance">
-          <dt>distance m</dt>
-          <dd><span id="total-distance-m">00000</span></dd>
-        </dl>
+        <div id="status">Idle</div>
+        <form id="workout-form">
+          <dl>
+            <dt>Distance (m):</dt>
+            <dd><input type="text" id="distance" value="8000" /></dd>
+          </dl>
+          <ul>
+            <li><a id="start-workout" href="#">Start Workout</a></li>
+            <li><a id="stop-workout" href="#">Stop Workout</a></li>
+          </ul>
+        </form>
       </div>
     </div>
-
-    <div id="sub">
+    <div id="content">
       <div class="pad">
-        <dl>
-          <dt>cal</dt>
-          <dd id="kcal">0000</dd>
-        </dl>
-        <dl>
-          <dt>total strokes</dt>
-          <dd><span id="total-strokes">0</span></dd>
-        </dl>
-        <dl>
-          <dt>stroke</dt>
-          <dd>
-            <pre id="stroke">
- / \
-            </pre>
-          </dd>
+        <div id="sub">
+          <dl>
+            <dt>total strokes</dt>
+            <dd><span id="total-strokes">0</span></dd>
+          </dl>
+          <dl id="meters-sec">
+            <dt>meters/sec</dt>
+            <dd><span id="avg-mps">0.00</span></dd>
+          </dl>
+          <dl id="total-distance">
+            <dt>meters</dt>
+            <dd><span id="total-distance-m">00000</span></dd>
+          </dl>
+          <dl id="duration">
+            <dt>total time</dt>
+            <dd><span id="hour">00</span>:<span id="min">00</span>:<span id="sec">00</span>:<span id="sec-dec">0</span></dd>
+          </dl>
+          <dl>
+            <dt>cal</dt>
+            <dd id="kcal">0000</dd>
+          </dl>
+        </div>
+        <div id="main">
+          <dl>
+            <dt>stroke rate/min</dt>
+            <dd><span id="stroke-rate">00</span></dd>
+          </dl>
+          <dl id="five-hundred">
+            <dt>/500m</dt>
+            <dd><span id="avg-500m-min">00</span>:<span id="avg-500m-sec">00</span></dd>
+          </dl>
+          <dl id="total-distance-remaining">
+            <dt>meters remaining</dt>
+            <dd><span id="total-meters-remaining">00000</span></dd>
+          </dl>
         </div>
       </div>
     </div>
 
-    <div id="messages"></div>
-
+    <script src="jquery-1.7.1.min.js"></script>
     <script src="rower.js"></script>
     <script>
-       Rower.startWorkout();
+      Rower.controller.init();
     </script>
   </body>
 </html>
