@@ -1,13 +1,9 @@
-var Rower = {}; 
+var Rower = {};
 
 Rower.ui = (function($) {
   var startLinkClick = function(f) {
     return $("#start-workout").click(f);
   };
-
-  var stopLinkClick = function(f) {
-    return $("#stop-workout").click(f);
-  }
 
   var getDistance = function() {
     return parseInt($("#distance").val());
@@ -30,7 +26,6 @@ Rower.ui = (function($) {
 
   return {
     startLinkClick: startLinkClick,
-    stopLinkClick: stopLinkClick,
     getDistance: getDistance,
     setHour: function(v) {
       setNumber('hour', 2, v);
@@ -107,16 +102,13 @@ Rower.controller = (function($) {
 
   var startWorkout = function() {
     distance = ui.getDistance();
-    var data = JSON.stringify({type: "start-workout", 
-                               data: {distance: distance}});
+    var data = JSON.stringify({type: "start-workout",
+                               data: {type: "distance",
+                                      units: "meters",
+                                      value: distance}});
     console.log("starting: " + data);
     ui.setMetersRemaining(distance);
     ws.send(data);
-  };
-
-  var stopWorkout = function() {
-    console.log("stopping workout");
-    ws.send(JSON.stringify({type: "stop-workout"}));
   };
 
   var init = function() {
@@ -132,10 +124,9 @@ Rower.controller = (function($) {
       }
     };
     ui.startLinkClick(startWorkout);
-    ui.stopLinkClick(stopWorkout);
   };
 
   return {
-    init: init    
+    init: init
   }
 })(jQuery);

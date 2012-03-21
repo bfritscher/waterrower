@@ -8,8 +8,6 @@
            (java.util Date)
            (java.text SimpleDateFormat)))
 
-(def current-workout (atom nil))
-
 (defn send-event
   [conn event]
   (.send conn (json/encode event)))
@@ -18,50 +16,29 @@
   []
   (str "data/" (.format (SimpleDateFormat. "yyyy-MM-dd_H_m") (Date.)) ".cap"))
 
-(defn new-workout
-  [distance dev?]
-  (if dev?
-    (s4-stub/new-workout)
-    (s4/new-workout {:path "/dev/tty.usbmodemfd121"
-                     :baud 19200}
-                    {:type  :distance
-                     :units :meters
-                     :value distance})))
+(defn ->workout
+  [m]
+  (into {} (map (fn [[k v]] [k (if (contains? #{:units :type} k) (keyword v) v)]) m)))
 
 (defmulti handle (fn [_ data _] (:type data)))
 
 (defmethod handle "start-workout"
-  [conn {distance :distance} {dev? :dev?}]
-  (when @current-workout
-    (println "closing existing workout")
-    (s4/close @current-workout))
-  (println "starting workout")
-  (let [workout (new-workout distance dev?)]
-    (when-not dev?
-      (let [f (-> (build-filename) FileWriter. PrintWriter.)]
-        (s4/add-handler workout #(.println f (json/encode %)))))
-    (reset! current-workout workout)
-    (s4/add-handler workout (partial send-event conn))
-
-    (s4/start workout)))
-
-(defmethod handle "stop-workout"
-  [conn _ _]
-  (println "stopping workout")
-  (when @current-workout
-    (s4/close @current-workout)
-    (reset! current-workout nil)))
+  [conn msg port]
+  (let [f (-> (build-filename) FileWriter. PrintWriter.)]
+    (s4/add-handler #(.println f (json/encode %))))
+  (s4/add-handler (partial send-event conn))
+  (s4/start port (->workout (:data msg))))
 
 (defn run-webbit
-  [opts]
+  [port]
   (doto (WebServers/createWebServer 3000)
     (.add "/rower"
           (proxy [WebSocketHandler] []
             (onOpen [_])
             (onClose [_] )
-            (onMessage [conn data]
-              (let [data (json/decode data true)]
-                (println "received:" data)
-                (handle conn data opts)))))
+            (onMessage [conn msg]
+              (let [msg (json/decode msg true)]
+                (println "received:" msg)
+                (handle conn msg port)))))
     (.add (StaticFileHandler. "./resources/public"))
     (.start)))

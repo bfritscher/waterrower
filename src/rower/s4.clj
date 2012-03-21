@@ -2,6 +2,12 @@
   (:require [serial-port :as sp]
             [clojure.string :as string]))
 
+(def handlers (atom []))
+
+(defn add-handler
+  [handler]
+  (swap! handlers conj handler))
+
 (def commands
   {:start             "USB"
    :reset             "RESET"
@@ -21,6 +27,13 @@
    :distance-miles    "DDMI"
    :distance-km       "DDKM"
    :distance-strokes  "DDST"})
+
+(defn send-command
+  [cmd port]
+  (let [cmd (.toUpperCase (if (keyword? cmd)
+                            (get commands cmd)
+                            cmd))]
+    (sp/write port (.getBytes (str cmd "\r\n")))))
 
 (def memory-map
   {"054" {:type :total-distance-dec    :size :single :base 16}
@@ -58,11 +71,6 @@
                 h))]
     (str (get workout-map type) (get unit-map units) hex)))
 
-(defn send-command
-  [cmd port]
-  (let [cmd (.toUpperCase (if (keyword? cmd) (get commands cmd) cmd))]
-    (sp/write port (.getBytes (str cmd "\r\n")))))
-
 (defn whitespace?
   [c]
   (contains? #{\return \newline} c))
@@ -90,19 +98,22 @@
 
 (defn event-for
   [cs]
-  (let [cmd (apply str cs)]
-    (cond
-     (= "PING"  cmd)            (ping)
-     (= \P      (first cmd))    (pulse (Integer/valueOf (subs cmd 1) 16))
-     (= "SS"    cmd)            (stroke-start)
-     (= "SE"    cmd)            (stroke-end)
-     (= "OK"    cmd)            (ok)
-     (= "IV"    (subs cmd 0 2)) (model (subs cmd 2))
-     (= "IDS"   (subs cmd 0 3)) (read-reply cmd)
-     (= "IDD"   (subs cmd 0 3)) (read-reply cmd)
-     (= "IDT"   (subs cmd 0 3)) (read-reply cmd)
-     (= "ERROR" cmd)            (error)
-     :else                      (event :unknown cmd))))
+  (try
+   (let [cmd (apply str cs)]
+     (cond
+      (= "PING"  cmd)            (ping)
+      (= \P      (first cmd))    (pulse (Integer/valueOf (subs cmd 1) 16))
+      (= "SS"    cmd)            (stroke-start)
+      (= "SE"    cmd)            (stroke-end)
+      (= "OK"    cmd)            (ok)
+      (= "IV"    (subs cmd 0 2)) (model (subs cmd 2))
+      (= "IDS"   (subs cmd 0 3)) (read-reply cmd)
+      (= "IDD"   (subs cmd 0 3)) (read-reply cmd)
+      (= "IDT"   (subs cmd 0 3)) (read-reply cmd)
+      (= "ERROR" cmd)            (error)
+      :else                      (event :unknown cmd)))
+   (catch Exception e
+     (.println *err* (str "failure finding event for " cs)))))
 
 (defn start-requesting
   [port]
@@ -116,7 +127,7 @@
   (recur port))
 
 (defn start-capturing
-  [port handlers]
+  [port]
   (let [input (:in-stream port)]
     (loop [buffer []]
       (let [c (char (.read input))]
@@ -124,45 +135,24 @@
           (recur (conj buffer c))
           (if (= \newline c)
             (let [event (event-for buffer)]
-              (doseq [h handlers]
+              (doseq [h @handlers]
                 (h event))
               (recur []))
             (recur buffer)))))))
 
-(defprotocol IWorkout
-  (add-handler [this handler])
-  (start [this])
-  (close [this]))
-
 (defn stop
   [port]
-  (send-command :exit port)
-  (sp/close port))
+  (send-command :exit port))
 
 (defmacro spawn
   [& body]
   `(.start (Thread. (fn [] ~@body))))
 
-(defn new-workout
-  [config workout]
-  (let [{:keys [path baud]} config
-        port (sp/open path baud)
-        handlers (atom [])]
-    (reify IWorkout
-      (add-handler [_ handler]
-        (swap! handlers conj handler))
-      (start [this]
-        (try
-          (send-command :reset port)
-          (send-command (workout->command workout) port)
-          (send-command :start port)
-          (spawn (start-capturing port @handlers))
-          (spawn (start-requesting port))
-          port
-          (catch Exception e
-            (stop port)
-            (throw e))))
-      (close [_] (stop port)))))
-
-
+(defn start
+  [port workout]
+  (send-command :start port)
+  (send-command :reset port)
+  (send-command (workout->command workout) port)
+  (spawn (start-capturing port))
+  (spawn (start-requesting port)))
 
