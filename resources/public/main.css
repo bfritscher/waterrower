@@ -55,8 +55,19 @@ a {
 
 #status {
   float: right;
-
   padding: 2px 10px;
+}
+
+#status .connected {
+  color: #0f0;
+}
+
+#status .connecting {
+  color: yellow;
+}
+
+#status .disconnected {
+  color: #f00;
 }
 
 #content .pad {

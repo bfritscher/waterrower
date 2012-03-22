@@ -61,8 +61,8 @@ Rower.ui = (function($) {
     setKCal: function(v) {
       setNumber("kcal", 4, v);
     },
-    status: function(msg) {
-      setContents("status", msg);
+    status: function(msg, cssClass) {
+      $("#status").html("<span class='" + cssClass + "'>" + msg + "</span>");
     },
   };
 
@@ -112,10 +112,10 @@ Rower.controller = (function($) {
   };
 
   var init = function() {
-    ui.status("connecting...");
-    ws = new WebSocket('ws://' + document.location.host + '/rower');
-    ws.onopen  = function() { ui.status("connected"); }
-    ws.onclose = function() { ui.status("disconnected") };
+    ui.status("connecting...", "connecting");
+    ws = new ReconnectingWebSocket('ws://' + document.location.host + '/rower');
+    ws.onopen  = function() { ui.status("connected", "connected"); }
+    ws.onclose = function() { ui.status("disconnected", "disconnected") };
     ws.onmessage = function(msg) {
       data = JSON.parse(msg.data);
       command = commands[data.type];

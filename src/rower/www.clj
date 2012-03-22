@@ -1,20 +1,16 @@
 (ns rower.www
   (:require [cheshire.core :as json]
-            [rower.s4 :as s4]
-            [rower.s4-stub :as s4-stub])
+            [rower.s4 :as s4])
   (:import (org.webbitserver WebServer WebServers WebSocketHandler)
            (org.webbitserver.handler StaticFileHandler)
            (java.io FileWriter PrintWriter)
            (java.util Date)
            (java.text SimpleDateFormat)))
 
-(defn send-event
-  [conn event]
-  (.send conn (json/encode event)))
-
 (defn build-filename
-  []
-  (str "data/" (.format (SimpleDateFormat. "yyyy-MM-dd_H_m") (Date.)) ".cap"))
+  [{value :value units :units}]
+  (str "data/" (.format (SimpleDateFormat. "yyyy-MM-dd_H_m") (Date.))
+       value (name units) ".cap"))
 
 (defn ->workout
   [m]
@@ -23,14 +19,16 @@
 (defmulti handle (fn [_ data _] (:type data)))
 
 (defmethod handle "start-workout"
-  [conn msg port]
-  (let [f (-> (build-filename) FileWriter. PrintWriter.)]
-    (s4/add-handler #(.println f (json/encode %))))
-  (s4/add-handler (partial send-event conn))
-  (s4/start port (->workout (:data msg))))
+  [conn msg s4-mon]
+  (s4/clear-handlers s4-mon)
+  (let [workout (->workout (:data msg))
+        file    (-> (build-filename workout) FileWriter. PrintWriter.)]
+    (s4/add-handler s4-mon #(.println file (json/encode %)))
+    (s4/add-handler s4-mon #(.send conn (json/encode %)))
+    (s4/start-workout s4-mon workout)))
 
 (defn run-webbit
-  [port]
+  [s4-mon]
   (doto (WebServers/createWebServer 3000)
     (.add "/rower"
           (proxy [WebSocketHandler] []
@@ -39,6 +37,6 @@
             (onMessage [conn msg]
               (let [msg (json/decode msg true)]
                 (println "received:" msg)
-                (handle conn msg port)))))
+                (handle conn msg s4-mon)))))
     (.add (StaticFileHandler. "./resources/public"))
     (.start)))

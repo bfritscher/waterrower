@@ -4,7 +4,7 @@
 
 (def handlers (atom []))
 
-(defn add-handler
+(defn -add-handler
   [handler]
   (swap! handlers conj handler))
 
@@ -28,7 +28,7 @@
    :distance-km       "DDKM"
    :distance-strokes  "DDST"})
 
-(defn send-command
+(defn -send-command
   [cmd port]
   (let [cmd (.toUpperCase (if (keyword? cmd)
                             (get commands cmd)
@@ -122,7 +122,7 @@
                 :single "IRS"
                 :double "IRD"
                 :triple "IRT")]
-      (send-command (str cmd addr) port))
+      (-send-command (str cmd addr) port))
     (Thread/sleep 10))
   (recur port))
 
@@ -140,19 +140,39 @@
               (recur []))
             (recur buffer)))))))
 
-(defn stop
-  [port]
-  (send-command :exit port))
-
 (defmacro spawn
   [& body]
   `(.start (Thread. (fn [] ~@body))))
 
-(defn start
+(defn -start-workout
   [port workout]
-  (send-command :start port)
-  (send-command :reset port)
-  (send-command (workout->command workout) port)
-  (spawn (start-capturing port))
-  (spawn (start-requesting port)))
+  (-send-command :reset port)
+  (-send-command (workout->command workout) port))
+
+(defprotocol S4Monitor
+  (clear-handlers [this])
+  (add-handler [this handler])
+  (initialize [this])
+  (start-workout [this workout])
+  (send-command [this command])
+  (close [this]))
+
+(defn new-s4monitor
+  [path]
+  (let [port (sp/open path 19200)]
+    (-send-command :start port)      ;; initiate s4 sending us data
+    (spawn (start-capturing port))   ;; start capturing
+    (spawn (start-requesting port))  ;; start requesting data
+    (reify S4Monitor
+      (clear-handlers [_]
+        (reset! handlers []))
+      (add-handler [_ handler]
+        (-add-handler handler))
+      (start-workout [_ workout]
+        (-start-workout port workout))
+      (send-command [_ command]
+        (-send-command command port))
+      (close [_]
+        (-send-command :exit port)
+        (sp/close port)))))
 
