@@ -18,13 +18,19 @@
 
 (defmulti handle (fn [_ data _] (:type data)))
 
+(defn on-event
+  [conn file event]
+  (let [event (json/encode event)]
+    (.println file event)
+    (.flush file)
+    (.send conn event)))
+
 (defmethod handle "start-workout"
   [conn msg s4-mon]
   (s4/clear-handlers s4-mon)
   (let [workout (->workout (:data msg))
         file    (-> (build-filename workout) FileWriter. PrintWriter.)]
-    (s4/add-handler s4-mon #(.println file (json/encode %)))
-    (s4/add-handler s4-mon #(.send conn (json/encode %)))
+    (s4/add-handler s4-mon (partial on-event conn file))
     (s4/start-workout s4-mon workout)))
 
 (defn run-webbit
