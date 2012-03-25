@@ -146,7 +146,7 @@ Rower.history = (function($) {
       },
       xaxes: [{ position: "bottom", mode: "time", ticks: 30 }],
       yaxes: [{ position: "left", min: 350, max: 520 },
-              { position: "right", min: 24, max: 32 }]
+              { position: "right", min: 20, max: 32 }]
     });
   };
 

@@ -123,7 +123,7 @@
                 :double "IRD"
                 :triple "IRT")]
       (-send-command (str cmd addr) port))
-    (Thread/sleep 500))
+    (Thread/sleep 10))
   (recur port))
 
 (defn start-capturing
