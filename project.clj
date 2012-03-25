@@ -6,5 +6,6 @@
                  [serial-port               "1.1.2"]
                  [org.webbitserver/webbit   "0.4.6"]
                  [cheshire                  "2.2.1"]
-                 [log4j                     "1.2.16"]]
+                 [log4j                     "1.2.16"]
+                 [hiccup                    "1.0.0-beta1"]]
   :main rower.main)

@@ -1,0 +1,46 @@
+#history-page {
+  background: #fff;
+  color: #000;
+  padding: 20px;
+}
+
+#history-page a:link {
+  color: #00f;
+}
+
+#history-page .session {
+  width: 100%;
+  background: #eee;
+  margin: 0 0 10px 0;
+}
+
+#history-page dl {
+  float: none;
+  margin: 0;
+  width: 100%;
+}
+
+#history-page dt, #history-page dd {
+
+}
+
+#history-page dt {
+  float: left;
+}
+
+#history-page dd {
+  float: none;
+  margin: 0;
+}
+
+#history-page dt, #history-page .distance {
+  font-size: 2em;
+}
+
+#history-page .distance {
+  float: right;
+}
+
+#history-page .graphs {
+  width: 100%;
+}

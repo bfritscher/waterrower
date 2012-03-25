@@ -1,31 +1,3 @@
-body {
-  font-family: helvetica, arial;
-  background: #232;
-  color: #fff;
-}
-
-.clearfix:after {
-  content: ".";
-  display: block;
-  clear: both;
-  visibility: hidden;
-  line-height: 0;
-  height: 0;
-}
-
-.clearfix {
-  display: inline-block;
-}
-
-a {
-  color: #fc0;
-  text-decoration: none;
-}
-
-.pad {
-  padding: 10px;
-}
-
 #bar {
   width: 100%;
   background: #000;
@@ -86,39 +58,36 @@ a {
   font-size: 10em
 }
 
-dl {
+#dashboard-page dl {
   float: left;
   clear: left;
   margin: 0;
 }
 
-dt {
+#dashboard-page dt {
   font-size: large;
   float: right;
   margin: 20px 0 0 10px;
   color: #ccc;
 }
 
-dd {
+#dashboard-page dd {
   margin: 0 0 10px 0;
   float: left;
 }
 
-form dl {
+#dashboard-page form dl {
   float: none;
 }
 
-form dt {
+#dashboard-page form dt {
   float: left;
   margin: 0 10px 0 0;
   color: #ccc;
   font-size: 1em;
 }
 
-form dd {
+#dashboard-page form dd {
   float: left;
 }
 
-#five-hundred dd {
-
-}

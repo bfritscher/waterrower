@@ -68,7 +68,7 @@ Rower.ui = (function($) {
 
 }(jQuery));
 
-Rower.controller = (function($) {
+Rower.dashboard = (function($) {
   var ui = Rower.ui;
   var ws;
   var distance = 0;
@@ -113,7 +113,7 @@ Rower.controller = (function($) {
 
   var init = function() {
     ui.status("connecting...", "connecting");
-    ws = new ReconnectingWebSocket('ws://' + document.location.host + '/rower');
+    ws = new ReconnectingWebSocket('ws://' + document.location.host + '/ws');
     ws.onopen  = function() { ui.status("connected", "connected"); }
     ws.onclose = function() { ui.status("disconnected", "disconnected") };
     ws.onmessage = function(msg) {
@@ -129,4 +129,59 @@ Rower.controller = (function($) {
   return {
     init: init
   }
+})(jQuery);
+
+Rower.history = (function($) {
+
+  var plotGraph = function($div, data) {
+    $div.css("height", "200px")
+      .css("margin", "10px 0 0 0")
+      .css("padding", "10px");
+    $.plot($div, data, {
+      series: {
+        lines: { show: true,
+                 fill: true },
+        points: { show: false },
+        shadowSize: 0
+      },
+      xaxes: [{ position: "bottom", mode: "time", ticks: 30 }],
+      yaxes: [{ position: "left", min: 350, max: 520 },
+              { position: "right", min: 24, max: 32 }]
+    });
+  };
+
+  var showSession = function(session) {
+    return function(data, status, req) {
+      plotGraph($(session.find(".graphs .avg-speed")),
+                [{ label: "avg speed",
+                   data: data["avg-speed"],
+                   yaxis: 1 },
+                 { label: "stroke rate",
+                   data: data["stroke-rate"],
+                   yaxis: 2}]);
+    };
+  };
+
+  var expandSession = function() {
+    var $session = $(this).parents(".session");
+    var filename = $(this).attr("href");
+    $.ajax({
+      url: "http://" + document.location.host + "/session",
+      dataType: "json",
+      data: "filename=" + filename,
+      success: showSession($session),
+      error: function(req, txt, err) {
+        console.log(err);
+      }
+    });
+    return false;
+  };
+
+  var init = function() {
+    $('.expand-link').click(expandSession);
+  };
+
+  return {
+    init: init
+  };
 })(jQuery);
