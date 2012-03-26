@@ -2,7 +2,7 @@
   (:use
    [compojure.core :only [defroutes GET]]
    [compojure.route :only [resources]]
-   [lamina.core :only [receive enqueue channel permanent-channel siphon map*]])
+   [lamina.core :only [receive receive-all enqueue channel permanent-channel siphon map*]])
   (:require
    [cheshire.core :as json]
    [rower
@@ -28,8 +28,6 @@
       (update-in [:units] keyword)
       (update-in [:type] keyword)))
 
-(defmulti handle (fn [_ data _] (:type data)))
-
 (defn on-event
   [ch file event]
   (let [event (json/encode event)]
@@ -37,17 +35,28 @@
     (.flush file)
     (enqueue ch event)))
 
+(defmulti handle (fn [_ _ data] (:type data)))
+
+(defmethod handle "start-workout"
+  [ch s4-mon msg]
+  (s4/clear-handlers s4-mon)
+  (let [workout (->workout (:data msg))
+        file    (-> (build-filename workout) FileWriter. PrintWriter.)]
+    (s4/add-handler s4-mon (partial on-event ch file))
+    (s4/start-workout s4-mon workout)))
+
+(defmethod handle :default
+  [ch s4-mon msg]
+  (.println *err* "no handler for msg of" msg))
+
+(defn handle-msg
+  [ch s4-mon s]
+  (let [msg (json/decode s true)]
+    (handle ch s4-mon msg)))
+
 (defn ws-handler
   [ch {s4-mon :s4}]
-  (receive
-   ch
-   (fn [s]
-     (let [msg (json/decode s true)]
-       (s4/clear-handlers s4-mon)
-       (let [workout (->workout (:data msg))
-             file (-> (build-filename workout) FileWriter. PrintWriter.)]
-         (s4/add-handler s4-mon (partial on-event ch file))
-         (s4/start-workout s4-mon workout))))))
+  (receive-all ch (partial handle-msg ch s4-mon)))
 
 (defroutes routes
   (GET "/analysis"      []     (views/analysis))
