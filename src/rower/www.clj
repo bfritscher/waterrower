@@ -47,7 +47,7 @@
 
 (defmethod handle :default
   [ch s4-mon msg]
-  (.println *err* "no handler for msg of" msg))
+  (.println *err* (str "no handler for msg of" msg)))
 
 (defn handle-msg
   [ch s4-mon s]
