@@ -1,22 +1,18 @@
 (ns rower.www
-  (:require [cheshire.core :as json]
-            [rower
-             [s4 :as s4]
-             [views :as views]])
-  (:import (org.webbitserver WebServer WebServers WebSocketHandler
-                             HttpHandler)
-           (org.webbitserver.handler StaticFileHandler)
-           (java.io FileWriter PrintWriter)
-           (java.util Date)
-           (java.text SimpleDateFormat)))
-
-(defn reload-all-ns
-  []
-  (doseq [ns-sym (->> (all-ns)
-                      (map str)
-                      (filter #(re-find #"^rower\.*" %))
-                      (map symbol))]
-    (require ns-sym :reload)))
+  (:use
+   [compojure.core :only [defroutes GET]]
+   [compojure.route :only [resources]]
+   [lamina.core :only [receive enqueue channel permanent-channel siphon map*]])
+  (:require
+   [cheshire.core :as json]
+   [rower
+    [s4           :as s4]
+    [views        :as views]]
+   [aleph.http    :as http])
+  (:import
+   [java.io FileWriter PrintWriter]
+   [java.util Date]
+   [java.text SimpleDateFormat]))
 
 (defn time-str
   []
@@ -28,64 +24,46 @@
 
 (defn ->workout
   [m]
-  (let [maybe-keywordize-value #(if (contains? #{:units :type} %1)
-                                  (keyword %2)
-                                  %2)]
-    (into {} (map (fn [[k v]] [k (maybe-keywordize-value k v)]) m))))
+  (-> m
+      (update-in [:units] keyword)
+      (update-in [:type] keyword)))
 
 (defmulti handle (fn [_ data _] (:type data)))
 
 (defn on-event
-  [conn file event]
+  [ch file event]
   (let [event (json/encode event)]
     (.println file event)
     (.flush file)
-    (.send conn event)))
+    (enqueue ch event)))
 
-(defmethod handle "start-workout"
-  [conn msg s4-mon]
-  (s4/clear-handlers s4-mon)
-  (let [workout (->workout (:data msg))
-        file    (-> (build-filename workout) FileWriter. PrintWriter.)]
-    (s4/add-handler s4-mon (partial on-event conn file))
-    (s4/start-workout s4-mon workout)))
+(defn ws-handler
+  [ch {s4-mon :s4}]
+  (receive
+   ch
+   (fn [s]
+     (let [msg (json/decode s true)]
+       (s4/clear-handlers s4-mon)
+       (let [workout (->workout (:data msg))
+             file (-> (build-filename workout) FileWriter. PrintWriter.)]
+         (s4/add-handler s4-mon (partial on-event ch file))
+         (s4/start-workout s4-mon workout))))))
 
-(defn http-handler
-  [content content-type dev?]
-  (proxy [HttpHandler] []
-    (handleHttpRequest [request response _]
-      (when dev?
-        (reload-all-ns))
-      (doto response
-        (.header "content-type" content-type)
-        (.content (content request))
-        (.end)))))
+(defroutes routes
+  (GET "/analysis"      []     (views/analysis))
+  (GET "/session/:file" [file] (views/session file))
+  (GET "/ws"            []     (http/wrap-aleph-handler ws-handler))
+  (GET "/"              []     (views/dashboard))
+  (resources "/"))
 
-(defn session-data
-  [req]
-  (views/session (.queryParam req "filename")))
+(defn wrap-s4
+  [handler s4-mon]
+  (fn [req]
+    (handler (assoc req :s4 s4-mon))))
 
-(defn run-webbit
-  [s4-mon dev?]
-  (doto (WebServers/createWebServer 3000)
-    (.add "/ws"
-          (proxy [WebSocketHandler] []
-            (onOpen [_])
-            (onClose [_])
-            (onMessage [conn msg]
-              (let [msg (json/decode msg true)]
-                (handle conn msg s4-mon)))))
-    (.add "/analysis"
-          (http-handler views/analysis
-                        "text/html"
-                        dev?))
-    (.add "/session"
-          (http-handler session-data
-                        "application/json"
-                        dev?))
-    (.add "/"
-          (http-handler views/dashboard
-                        "text/html"
-                        dev?))
-    (.add (StaticFileHandler. "./resources/public"))
-    (.start)))
+(defn start
+  [s4-mon]
+  (http/start-http-server (-> routes
+                              (wrap-s4 s4-mon)
+                              http/wrap-ring-handler)
+                          {:port 3000 :websocket true}))

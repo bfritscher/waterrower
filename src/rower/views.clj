@@ -6,7 +6,7 @@
              [page :as hicp]]))
 
 (defn dashboard
-  [req]
+  []
   (hic/html
    [:html
     [:head
@@ -64,7 +64,7 @@
      [:script "Rower.dashboard.init();"]]]))
 
 (defn analysis
-  [req]
+  []
   (hic/html
    [:html
     [:head

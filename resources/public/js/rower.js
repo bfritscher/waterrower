@@ -114,6 +114,7 @@ Rower.dashboard = (function($) {
   var init = function() {
     ui.status("connecting...", "connecting");
     ws = new ReconnectingWebSocket('ws://' + document.location.host + '/ws');
+    ws.onerror = function(e) { ui.status(e, "error"); }
     ws.onopen  = function() { ui.status("connected", "connected"); }
     ws.onclose = function() { ui.status("disconnected", "disconnected") };
     ws.onmessage = function(msg) {
@@ -166,9 +167,8 @@ Rower.history = (function($) {
     var $session = $(this).parents(".session");
     var filename = $(this).attr("href");
     $.ajax({
-      url: "http://" + document.location.host + "/session",
+      url: "http://" + document.location.host + "/session/" + filename,
       dataType: "json",
-      data: "filename=" + filename,
       success: showSession($session),
       error: function(req, txt, err) {
         console.log(err);

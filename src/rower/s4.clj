@@ -75,7 +75,7 @@
   [c]
   (contains? #{\return \newline} c))
 
-(defn event 
+(defn event
   [type & [value]]
   {:type type :value value :at (System/currentTimeMillis)})
 
@@ -99,21 +99,21 @@
 (defn event-for
   [cs]
   (try
-   (let [cmd (apply str cs)]
-     (cond
-      (= "PING"  cmd)            (ping)
-      (= \P      (first cmd))    (pulse (Integer/valueOf (subs cmd 1) 16))
-      (= "SS"    cmd)            (stroke-start)
-      (= "SE"    cmd)            (stroke-end)
-      (= "OK"    cmd)            (ok)
-      (= "IV"    (subs cmd 0 2)) (model (subs cmd 2))
-      (= "IDS"   (subs cmd 0 3)) (read-reply cmd)
-      (= "IDD"   (subs cmd 0 3)) (read-reply cmd)
-      (= "IDT"   (subs cmd 0 3)) (read-reply cmd)
-      (= "ERROR" cmd)            (error)
-      :else                      (event :unknown cmd)))
-   (catch Exception e
-     (.println *err* (str "failure finding event for " cs)))))
+    (let [cmd (apply str cs)]
+      (cond
+       (= "PING"  cmd)            (ping)
+       (= \P      (first cmd))    (pulse (Integer/valueOf (subs cmd 1) 16))
+       (= "SS"    cmd)            (stroke-start)
+       (= "SE"    cmd)            (stroke-end)
+       (= "OK"    cmd)            (ok)
+       (= "IV"    (subs cmd 0 2)) (model (subs cmd 2))
+       (= "IDS"   (subs cmd 0 3)) (read-reply cmd)
+       (= "IDD"   (subs cmd 0 3)) (read-reply cmd)
+       (= "IDT"   (subs cmd 0 3)) (read-reply cmd)
+       (= "ERROR" cmd)            (error)
+       :else                      (event :unknown cmd)))
+    (catch Exception e
+      (.println *err* (str "failure finding event for " cs)))))
 
 (defn start-requesting
   [port]
@@ -157,12 +157,12 @@
   (send-command [this command])
   (close [this]))
 
-(defn new-s4monitor
+(defn new-serial-s4
   [path]
   (let [port (sp/open path 19200)]
-    (-send-command :start port)      ;; initiate s4 sending us data
-    (spawn (start-capturing port))   ;; start capturing
-    (spawn (start-requesting port))  ;; start requesting data
+    (-send-command :start port)     ;; initiate s4 sending us data
+    (spawn (start-capturing port))  ;; start capturing
+    (spawn (start-requesting port)) ;; start requesting data
     (reify S4Monitor
       (clear-handlers [_]
         (reset! handlers []))
@@ -175,4 +175,3 @@
       (close [_]
         (-send-command :exit port)
         (sp/close port)))))
-
