@@ -11,14 +11,12 @@
 
 (defn new-s4
   [dev? path]
-  (if dev?
-    (s4-stub/new-stub-s4)
-    (s4/new-serial-s4 path)))
+  )
 
 (defn -main
   [& args]
-  (when (= "-dev" (first args))
-    (reset! dev? true))
-  (with-open [s4-mon (new-s4 dev? "/dev/tty.usbmodemfd121")]
+  (with-open [s4-mon (if (= "-dev" (first args))
+                       (s4-stub/new-stub-s4)
+                       (s4/new-serial-s4 "/dev/tty.usbmodemfd121"))]
     (www/start s4-mon)
     (.join (Thread/currentThread))))
