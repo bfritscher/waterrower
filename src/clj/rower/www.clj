@@ -52,10 +52,12 @@
 (defn handle-msg
   [ch s4-mon s]
   (let [msg (json/decode s true)]
+    (println "got" msg)
     (handle ch s4-mon msg)))
 
 (defn ws-handler
   [ch {s4-mon :s4}]
+  (println "connected")
   (receive-all ch (partial handle-msg ch s4-mon)))
 
 (defroutes routes

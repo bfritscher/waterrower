@@ -58,10 +58,11 @@
         [:dl#total-distance-remaining
          [:dt "meters remaining"]
          [:dd [:span#total-meters-remaining "00000"]]]]]]
-     (hicp/include-js "js/jquery-1.7.1.min.js"
+     (hicp/include-js ;; "js/jquery-1.7.1.min.js"
                       "js/reconnecting-websocket.min.js"
-                      "js/rower.js")
-     [:script "Rower.dashboard.init();"]]]))
+                      "js/app.js")
+     ;; [:script "Rower.dashboard.init();"]
+     ]]))
 
 (defn analysis
   []

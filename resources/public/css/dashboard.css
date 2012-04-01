@@ -30,15 +30,15 @@
   padding: 2px 10px;
 }
 
-#status .connected {
+#status.connected {
   color: #0f0;
 }
 
-#status .connecting {
+#status.connecting {
   color: yellow;
 }
 
-#status .disconnected {
+#status.disconnected {
   color: #f00;
 }
 

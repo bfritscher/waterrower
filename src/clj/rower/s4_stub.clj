@@ -9,7 +9,7 @@
          m 0]
     (doseq [h @handlers]
       (h (event :total-distance-m m))
-      (h (event :display-sec (int (/ i 10))))
+      (h (event :display-sec (mod (int (/ i 10)) 60)))
       (h (event :display-sec-dec (mod i 10)))
       (h (event :display-min (int (/ i 600))))
       (h (event :avg-distance-cmps (int (* 100 (/ m (/ i 10)))))))
