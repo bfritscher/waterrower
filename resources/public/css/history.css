@@ -41,6 +41,7 @@
   float: right;
 }
 
-#history-page .graphs {
+#history-page .graph {
   width: 100%;
+  height: 200px;
 }

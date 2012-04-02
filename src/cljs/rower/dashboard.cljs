@@ -1,26 +1,18 @@
 (ns rower.dashboard
+  (:use [rower.dashboard :only [$ set-text]])
   (:require [goog.dom :as dom]
             [goog.dom.classes :as classes]
             [goog.events :as events]
             [clojure.browser.repl :as repl]))
 
-(def socket (new js/window.WebSocket (str "ws://" (.-host (.-location js/document)) "/ws")))
+(def socket (new js/ReconnectingWebSocket (str "ws://" (.-host (.-location js/document)) "/ws")))
 
 (def distance (atom 0))
-
-(defn $
-  [id]
-  (dom/getElement (name id)))
 
 (defn pad
   [s n]
   (loop [s (str s)]
     (if (< (count s) n) (recur (str "0" s)) s)))
-
-(defn set-text
-  [el & contents]
-  (let [el (if (keyword? el) (dom/getElement (name el)) el)]
-    (dom/setTextContent el (apply str contents))))
 
 (defmulti command #(.-type %))
 
@@ -62,7 +54,7 @@
 
 (defn set-status
   [msg & [class]]
-  (let [e       ($ :status)
+  (let [e       ($ :#status)
         classes (classes/get e)
         class   (or class msg)]
     (doseq [c classes]
@@ -77,7 +69,7 @@
 
 (defn start-workout
   [event]
-  (let [workout-distance (.-value ($ :distance))
+  (let [workout-distance (.-value ($ :#distance))
         data (.-strobj {"type" "start-workout"
                         "data" (.-strobj {"type" "distance"
                                           "units" "meters"
@@ -89,10 +81,12 @@
     (.send socket to-send)
     false))
 
-(set-status "connecting..." "connecting")
-(set! (.-onerror socket)   #(set-status "error"))  
-(set! (.-onopen socket)    #(set-status "connected"))
-(set! (.-onclose socket)   #(set-status "disconnected"))
-(set! (.-onmessage socket) on-message)
-(events/listen ($ :start-workout) "click" start-workout)
+(defn init
+  []
+  (set-status "connecting..." "connecting")
+  (set! (.-onerror socket)   #(set-status "error"))  
+  (set! (.-onopen socket)    #(set-status "connected"))
+  (set! (.-onclose socket)   #(set-status "disconnected"))
+  (set! (.-onmessage socket) on-message)
+  (events/listen ($ :#start-workout) "click" start-workout))
 

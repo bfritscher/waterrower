@@ -8,3 +8,4 @@
 /.lein-deps-sum
 data/
 .lein*
+resources/public/js/app.js

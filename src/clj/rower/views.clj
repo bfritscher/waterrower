@@ -61,33 +61,5 @@
      (hicp/include-js ;; "js/jquery-1.7.1.min.js"
                       "js/reconnecting-websocket.min.js"
                       "js/app.js")
-     ;; [:script "Rower.dashboard.init();"]
-     ]]))
+     [:script "rower.dashboard.init();"]]]))
 
-(defn analysis
-  []
-  (hic/html
-   [:html
-    [:head
-     (hicp/include-css "css/reset.css"
-                       "css/main.css"
-                       "css/history.css")]
-    [:body#history-page
-     (for [{:keys [date time distance units filename]} (anal/sessions)]
-       [:div.session
-        [:div.pad
-         [:dl.clearfix
-          [:dt
-           [:a.expand-link {:href filename} (str date " " time)]]
-          [:dd.distance distance " " units]]
-         [:div.graphs
-          [:div.avg-speed]
-          [:div.stroke-rate]]]])
-     (hicp/include-js "js/jquery-1.7.1.min.js"
-                      "js/jquery.flot.min.js"
-                      "js/rower.js")
-     [:script "Rower.history.init();"]]]))
-
-(defn session
-  [filename]
-  (json/encode (anal/filename->session filename)))

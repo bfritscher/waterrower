@@ -13,6 +13,7 @@
   :cljsbuild {:builds
               [{:source-path "src/cljs"
                 :compiler {:output-to "resources/public/js/app.js"
+                           :libs ["reconnecting-websocket.min.js"]
                            ;; :optimizations :advanced
                            }}]}
   :main rower.main)

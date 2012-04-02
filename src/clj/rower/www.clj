@@ -1,18 +1,15 @@
 (ns rower.www
-  (:use
-   [compojure.core :only [defroutes GET]]
-   [compojure.route :only [resources]]
-   [lamina.core :only [receive receive-all enqueue channel permanent-channel siphon map*]])
-  (:require
-   [cheshire.core :as json]
-   [rower
-    [s4           :as s4]
-    [views        :as views]]
-   [aleph.http    :as http])
-  (:import
-   [java.io FileWriter PrintWriter]
-   [java.util Date]
-   [java.text SimpleDateFormat]))
+  (:use [compojure.core :only [defroutes GET]]
+        [compojure.route :only [resources]]
+        [lamina.core :only [receive receive-all enqueue channel permanent-channel siphon map*]])
+  (:require [cheshire.core :as json]
+            [rower
+             [s4           :as s4]
+             [views        :as views]]
+            [aleph.http    :as http])
+  (:import [java.io FileWriter PrintWriter]
+           [java.util Date]
+           [java.text SimpleDateFormat]))
 
 (defn time-str
   []
@@ -61,8 +58,6 @@
   (receive-all ch (partial handle-msg ch s4-mon)))
 
 (defroutes routes
-  (GET "/analysis"      []     (views/analysis))
-  (GET "/session/:file" [file] (views/session file))
   (GET "/ws"            []     (http/wrap-aleph-handler ws-handler))
   (GET "/"              []     (views/dashboard))
   (resources "/"))
