@@ -140,15 +140,6 @@
               (recur []))
             (recur buffer)))))))
 
-(defmacro spawn
-  [& body]
-  `(.start (Thread. (fn [] ~@body))))
-
-(defn -start-workout
-  [port workout]
-  (-send-command :reset port)
-  (-send-command (workout->command workout) port))
-
 (defprotocol S4Monitor
   (clear-handlers [this])
   (add-handler [this handler])
@@ -159,19 +150,22 @@
 
 (defn new-serial-s4
   [path]
-  (let [port (sp/open path 19200)]
-    (-send-command :start port)     ;; initiate s4 sending us data
-    (spawn (start-capturing port))  ;; start capturing
-    (spawn (start-requesting port)) ;; start requesting data
+  (let [port       (sp/open path 19200)
+        _          (-send-command :start port)
+        capturing  (future (start-capturing port))
+        requesting (future (start-requesting port))]
     (reify S4Monitor
       (clear-handlers [_]
         (reset! handlers []))
       (add-handler [_ handler]
         (-add-handler handler))
       (start-workout [_ workout]
-        (-start-workout port workout))
+        (-send-command :reset port)
+        (-send-command (workout->command workout) port))
       (send-command [_ command]
         (-send-command command port))
       (close [_]
+        (cancel-future capturing)
+        (cancel-future requesting)
         (-send-command :exit port)
         (sp/close port)))))

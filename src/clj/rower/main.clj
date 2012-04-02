@@ -9,10 +9,6 @@
    [clojure.string :as string])
   (:gen-class))
 
-(defn new-s4
-  [dev? path]
-  )
-
 (defn -main
   [& args]
   (with-open [s4-mon (if (= "-dev" (first args))
