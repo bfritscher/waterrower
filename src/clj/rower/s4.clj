@@ -165,7 +165,7 @@
       (send-command [_ command]
         (-send-command command port))
       (close [_]
-        (cancel-future capturing)
-        (cancel-future requesting)
+        (future-cancel capturing)
+        (future-cancel requesting)
         (-send-command :exit port)
         (sp/close port)))))

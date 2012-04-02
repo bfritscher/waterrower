@@ -69,7 +69,7 @@
 
 (defn start-workout
   [event]
-  (let [workout-distance (.-value (get-element :distance))
+  (let [workout-distance (js/parseInt (.-value (get-element :distance)))
         data (clj->js {"type" "start-workout"
                        "data" {"type" "distance"
                                "units" "meters"
