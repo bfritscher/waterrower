@@ -56,8 +56,8 @@
   (receive-all ch (partial handle-msg ch s4-mon)))
 
 (defroutes routes
-  (GET "/ws"            []     (http/wrap-aleph-handler ws-handler))
-  (GET "/"              []     (views/dashboard))
+  (GET "/ws" [] (http/wrap-aleph-handler ws-handler))
+  (GET "/"   [] (views/dashboard))
   (resources "/"))
 
 (defn wrap-s4
