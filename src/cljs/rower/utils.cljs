@@ -9,10 +9,14 @@
   [selector]
   (nodelist->coll (.querySelectorAll js/document (name selector))))
 
+(defn get-element
+  [id]
+  (let [id (if (keyword? id) (name id) id)]
+    (dom/getElement id)))
+
 (defn set-text
-  [el & contents]
-  (let [el (if (keyword? el) (dom/getElement (name el)) el)]
-    (dom/setTextContent el (apply str contents))))
+  [id & contents]
+  (dom/setTextContent (get-element id) (apply str contents)))
 
 (defn clj->js
   "Recursively transforms ClojureScript maps into Javascript objects,

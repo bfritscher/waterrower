@@ -1,5 +1,5 @@
 (ns rower.dashboard
-  (:use [rower.dashboard :only [$ set-text]])
+  (:use [rower.utils :only [$ set-text get-element]])
   (:require [goog.dom :as dom]
             [goog.dom.classes :as classes]
             [goog.events :as events]
@@ -54,7 +54,7 @@
 
 (defn set-status
   [msg & [class]]
-  (let [e       ($ :#status)
+  (let [e       (get-element :status)
         classes (classes/get e)
         class   (or class msg)]
     (doseq [c classes]
@@ -69,7 +69,7 @@
 
 (defn start-workout
   [event]
-  (let [workout-distance (.-value ($ :#distance))
+  (let [workout-distance (.-value (get-element :distance))
         data (.-strobj {"type" "start-workout"
                         "data" (.-strobj {"type" "distance"
                                           "units" "meters"
@@ -88,5 +88,5 @@
   (set! (.-onopen socket)    #(set-status "connected"))
   (set! (.-onclose socket)   #(set-status "disconnected"))
   (set! (.-onmessage socket) on-message)
-  (events/listen ($ :#start-workout) "click" start-workout))
+  (events/listen (get-element :start-workout) "click" start-workout))
 
