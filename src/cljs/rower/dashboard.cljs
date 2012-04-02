@@ -1,5 +1,5 @@
 (ns rower.dashboard
-  (:use [rower.utils :only [$ set-text get-element]])
+  (:use [rower.utils :only [$ set-text get-element clj->js]])
   (:require [goog.dom :as dom]
             [goog.dom.classes :as classes]
             [goog.events :as events]
@@ -70,10 +70,10 @@
 (defn start-workout
   [event]
   (let [workout-distance (.-value (get-element :distance))
-        data (.-strobj {"type" "start-workout"
-                        "data" (.-strobj {"type" "distance"
-                                          "units" "meters"
-                                          "value" workout-distance})})
+        data (clj->js {"type" "start-workout"
+                       "data" {"type" "distance"
+                               "units" "meters"
+                               "value" workout-distance}})
         to-send (.stringify js/JSON data)]
     (.log js/console to-send)
     (reset! distance workout-distance)
