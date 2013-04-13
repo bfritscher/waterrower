@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ static_url("reset.css") }}" />
+    <link rel="stylesheet" href="{{ static_url("base.css") }}" />
+  </head>
+  <style>
+
+  </style>
+  <body>
+    <div id="content">
+      <div id="status" class="not-connected">Not connected</div>
+      <div id="workout-details">
+        <label for="workout-distance">Distance (m):</label>
+        <input id="workout-distance" type="text" />
+        <label for="workout-time">Time (mins):</label>
+        <input id="workout-time" type="text" />
+        <button id="workout-begin">Begin</button>
+        <button id="workout-end">End</button>
+      </div>
+      <div id="stats">
+        <dl class="stat stat-small">
+          <dt>total kcal</dt>
+          <dd id="total-kcal">0000</dd>
+        </dl>
+        <dl class="stat stat-small"><dt>stroke rate</dt><dd id="stroke-rate">0</dd></dl>
+        <dl class="stat stat-large">
+          <dt>total m</dt>
+          <dd><span id="total-distance-m">00000</span></dd>
+        </dl>
+        <dl class="stat stat-large" id="split"><dt>/500m</dt><dd id="avg-500m-min">00</dd>:<dd id="avg-500m-sec">00</dd></dl>
+        <dl class="stat stat-large" id="clock">
+          <dt>total time</dt>
+          <dd id="hours">00</dd>:<dd id="minutes">00</dd>:<dd id="seconds">00</dd>.<dd id="millis">0</dd>
+        </dl>
+        <dl class="stat stat-small"><dt>m/s</dt><dd id="avg-mps">0.00</dd></dl>
+        <dl class="stat stat-small">
+          <dt>total strokes</dt>
+          <dd id="total-strokes">0000</dd>
+        </dl>
+        <div style="clear: both;"></div>
+      </div>
+      <div id="viz"></div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="{{ static_url("d3.v2.min.js") }}"></script>
+    <script src="{{ static_url("reconnecting-websocket.min.js") }}"></script>
+    <script src="{{ static_url("graph.js") }}"></script>
+    <script src="{{ static_url("dashboard.js") }}"></script>
+    <script>
+      $(function() {
+          polar.init();
+          dashboard.init();
+      });
+    </script>
+  </body>
+</html>

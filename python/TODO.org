@@ -1,0 +1,4 @@
+* TODO use sqlite as store for workouts
+* DONE polar visualisation
+* TODO ability to replay a stored workout
+* TODO page showing all previous workouts (as polar visualisation?)

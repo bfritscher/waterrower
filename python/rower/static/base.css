@@ -1,0 +1,106 @@
+body {
+    margin: 0;
+    background: #222;
+    color: white;
+    position: relative;
+    font-family: Inconsolata, monospace;
+}
+
+#content {
+    padding: 20px;
+}
+
+#workout-details input {
+    border: 1px solid #666;
+    background: #444;
+    color: #fff;
+}
+
+#stats {
+    margin: 20px 0;
+}
+
+dl {
+    float: left;
+    margin: 10px 20px;
+    text-align: center;
+}
+
+dt {
+    color: #ccc;
+}
+
+dd {
+    text-align: center;
+}
+
+dl.stat dt {
+    font-size: 32px;
+}
+
+dl.stat {
+    font-size: 56px;
+}
+
+dl.stat.stat-small dt {
+    font-size: 16px;
+}
+
+dl.stat.stat-small {
+    font-size: 28px;
+}
+
+dl.stat.stat-large dt {
+
+}
+
+dl.stat.stat-large dd {
+    font-size: 72px;
+}
+
+dl#clock dd, dl#split dd {
+    display: inline;
+}
+
+#status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#status.not-connected {
+    color: #fc0;
+}
+
+#status.connected {
+    color: #0c0;
+}
+
+#status.error {
+    color: #c00;
+}
+
+#progress .bar {
+    width: 800px;
+    height: 1em;
+    background: #090;
+    float: left;
+}
+
+#progress .part {
+    height: 1em;
+    float: left;
+}
+
+#progress .percentage {
+    float: left;
+    margin-left: 10px;
+}
+
+#viz {
+    text-align: center;
+}
+
+text {
+    fill: white;
+}
