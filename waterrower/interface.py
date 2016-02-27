@@ -37,11 +37,9 @@ MEMORY_MAP = {'055': {'type': 'total_distance_m',  'size': 'double', 'base': 16}
               '1A2': {'type': 'cmps',        'size': 'double',  'base': 16},
               '1A6': {'type': '500mps',        'size': 'double',  'base': 16},
               # explore
-              '047': {'type': 'stroke_rate2',        'size': 'double',  'base': 16},
-              '0A9': {'type': 'tank_volume',        'size': 'double',  'base': 16},
-              '05B': {'type': 'clock_countdown',        'size': 'double',  'base': 16},
-              '142': {'type': 'avg_time_stroke_whole',        'size': 'double',  'base': 16},
-              '143': {'type': 'avg_time_stroke_pull',        'size': 'double',  'base': 16},
+              #'0A9': {'type': 'tank_volume',        'size': 'single',  'base': 16},
+              '142': {'type': 'avg_time_stroke_whole',        'size': 'single',  'base': 10},
+              '143': {'type': 'avg_time_stroke_pull',        'size': 'single',  'base': 10},
               }
 
 
@@ -109,50 +107,6 @@ UNIT_MILES = 2
 UNIT_KM = 3
 UNIT_STROKES = 4
 
-# case 'S': // SS
-# 		if s4.workout.state == ResetPingReceived {
-# 			s4.workout.state = WorkoutStarted
-# 			// these are the things we want captured from the S4
-# 			for address, mmap := range g_memorymap {
-# 				s4.readMemoryRequest(address, mmap.size)
-# 			}
-# 		}
-# 		s4.aggregator.consume(AtomicEvent{
-# 			Time:  millis(),
-# 			Label: "stroke_start",
-# 			Value: 1})
-# 	case 'E': // SE
-# 		s4.aggregator.consume(AtomicEvent{
-# 			Time:  millis(),
-# 			Label: "stroke_end",
-# 			Value: 0})
-# 	}
-
-
-# // responses can start with:
-# 	// _ : _WR_
-# 	// O : OK
-# 	// E : ERROR
-# 	// P : PING, P
-# 	// S : SS, SE
-# 	c := b[0]
-# 	switch c {
-# 	case '_':
-# 		s4.wRHandler(b)
-# 	case 'I':
-# 		s4.informationHandler(b)
-# 	case 'O':
-# 		s4.oKHandler()
-# 	case 'E':
-# 		s4.errorHandler()
-# 	case 'P':
-# 		s4.pingHandler(b)
-# 	case 'S':
-# 		s4.strokeHandler(b)
-# 	default:
-# 		jww.INFO.Printf("Unrecognized packet: %s", string(b))
-# 	}
-
 SIZE_MAP = {'single': 'IRS',
             'double': 'IRD',
             'triple': 'IRT',}
@@ -200,7 +154,6 @@ def read_reply(cmd):
 def event_from(line):
     try:
         cmd = line.strip()
-        logging.debug(cmd)
         if cmd == STROKE_START_RESPONSE:
             return build_event(type='stroke_start', raw=cmd)
         elif cmd == STROKE_END_RESPONSE:
@@ -214,8 +167,7 @@ def event_from(line):
         elif cmd == PING_RESPONSE:
             return None
         elif cmd[:1] == PULSE_COUNT_RESPONSE:
-            ##TODO handle pulse event
-            return build_event(type='pulse', raw=cmd)
+            return None
         elif cmd == ERROR_RESPONSE:
             return build_event(type='error', raw=cmd)
         else:
@@ -264,15 +216,15 @@ class Rower(object):
                 size = MEMORY_MAP[address]['size']
                 cmd = SIZE_MAP[size]
                 self.write(cmd + address)
-            self._stop_event.wait(0.025)
+                self._stop_event.wait(1)
 
     def begin_distance_workout(self, distance):
         self._stop_event = threading.Event()
         self._request_thread = build_daemon(target=self.start_requesting)
         self._capture_thread = build_daemon(target=self.start_capturing)
-        units = UNIT_MAP['meters'] # TODO support others in UI
+        units = UNIT_MAP['meters']  # TODO support others in UI
         hex_distance = hex(distance).split('x')[1].rjust(4, '0')
-        command = 'WSI{0}{1}'.format(units, hex_distance) 
+        command = 'WSI{0}{1}'.format(units, hex_distance)
         logging.info('sending reset and workout command: %s', command)
         self.write('reset')
         self.write(command)
@@ -280,7 +232,6 @@ class Rower(object):
         self._capture_thread.start()
 
     def write(self, cmd):
-        logging.debug(cmd)
         raw = COMMANDS.get(cmd, cmd)
         self._serial.write(raw.upper() + '\r\n')
         self._serial.flush()
