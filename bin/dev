@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+./var/bin/python waterrower/main.py --port=8000 --demo --debug 
+
+

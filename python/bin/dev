@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-./var/bin/python rower/main.py --port=8000 --demo --debug 
-
-

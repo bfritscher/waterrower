@@ -1,0 +1,2 @@
+tornado==4.3
+pyserial==3.0.1
