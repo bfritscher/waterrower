@@ -43,10 +43,10 @@ dashboard = (function($) {
             $('#stroke-rate').text(data.value);
         },
         stroke_start: function(data) {
-
+            console.log(data);
         },
         stroke_end: function(data) {
-
+            console.log(data);
         }
     }
 

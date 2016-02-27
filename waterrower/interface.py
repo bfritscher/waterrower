@@ -23,7 +23,6 @@ COMMANDS = {'start':             'USB',
             'distance_strokes':  'DDST',}
 
 MEMORY_MAP = {'055': {'type': 'total_distance_m',  'size': 'double', 'base': 16},
-              '088': {'type': 'total_watts', 'size': 'double', 'base': 16},
               '140': {'type': 'total_strokes',     'size': 'double', 'base': 16},
               '1A9': {'type': 'stroke_rate',       'size': 'single', 'base': 16},
               '08A': {'type': 'total_kcal',        'size': 'triple', 'base': 16},
@@ -39,7 +38,6 @@ MEMORY_MAP = {'055': {'type': 'total_distance_m',  'size': 'double', 'base': 16}
               '1A6': {'type': '500mps',        'size': 'double',  'base': 16},
               # explore
               '047': {'type': 'stroke_rate2',        'size': 'double',  'base': 16},
-              '057': {'type': 'distance',        'size': 'double',  'base': 16},
               '0A9': {'type': 'tank_volume',        'size': 'double',  'base': 16},
               '05B': {'type': 'clock_countdown',        'size': 'double',  'base': 16},
               '142': {'type': 'avg_time_stroke_whole',        'size': 'double',  'base': 16},
@@ -202,6 +200,7 @@ def read_reply(cmd):
 def event_from(line):
     try:
         cmd = line.strip()
+        logging.debug(cmd)
         if cmd == STROKE_START_RESPONSE:
             return build_event(type='stroke_start', raw=cmd)
         elif cmd == STROKE_END_RESPONSE:
@@ -212,6 +211,8 @@ def event_from(line):
             return build_event(type='model', raw=cmd)
         elif cmd[:2] == READ_MEMORY_RESPONSE:
             return read_reply(cmd)
+        elif cmd == PING_RESPONSE:
+            return None
         elif cmd[:1] == PULSE_COUNT_RESPONSE:
             ##TODO handle pulse event
             return build_event(type='pulse', raw=cmd)
@@ -220,7 +221,7 @@ def event_from(line):
         else:
             #ignore
             #WR_RESPONSE
-            #PING_RESPONSE
+            #
             #AND INTERACTIVE_MODE
             return None
     except Exception as e:
@@ -279,6 +280,7 @@ class Rower(object):
         self._capture_thread.start()
 
     def write(self, cmd):
+        logging.debug(cmd)
         raw = COMMANDS.get(cmd, cmd)
         self._serial.write(raw.upper() + '\r\n')
         self._serial.flush()
