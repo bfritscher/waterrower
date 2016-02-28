@@ -82,6 +82,7 @@ class DataLogger(object):
         while not self._stop_event.is_set():
             #TODO keep track of max?
             #TODO keep track of history?
+            #TODO reset to 0 if not received since...
             self._event['time'] = int(round(time.time() * 1000))
             self._event['elapsed'] = self._event['time'] - self._activity['start_time']
             self._events.append(copy.deepcopy(self._event))
