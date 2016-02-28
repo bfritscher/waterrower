@@ -5,8 +5,13 @@ import Queue
 import logging
 import time
 
+from interface import PING_RESPONSE, RESET_REQUEST, OK_RESPONSE, MODEL_INFORMATION_REQUEST, \
+    MODEL_INFORMATION_RESPONSE
+
+
 def tohex(i, size):
     return hex(i)[-size:].rjust(size, '0').replace('x', '0')
+
 
 class FakeS4(object):
     """
@@ -18,36 +23,36 @@ class FakeS4(object):
         self.__thread = None
         self.__workout_event = None
         self.__stop_event = None
-        self.__i = 0
-        self.__total_meters = 0
 
     def __publish(self, s):
-        self.__queue.put(s + '\r\n')
+        self.__queue.put(s.upper() + '\r\n')
 
     def generate(self):
-        self.__publish('OK')
+        i = 0
+        m = 0
+        s = 0
+        self.__publish(OK_RESPONSE)
         # ping until a workout is started
         while not self.__workout_event.is_set():
-            self.__publish('PING')
+            self.__publish(PING_RESPONSE)
             self.__workout_event.wait(0.1)
 
-        self.__i = 0
-        self.__total_meters = 0
-        while not self.__stop_event.is_set(): # TODO maybe parse workout
-            self.__publish('PING')
-            self.__publish('IDD055' + tohex(self.__m, 4))
-            self.__publish('IDS1E1{0}'.format(int(self.__i / 10) % 60, 2))
-            self.__publish('IDS1E0{0}'.format(int(self.__i % 10), 2))
-            self.__publish('IDS1E2{0}'.format(int(self.__i / 600), 2))
-            if self.__i % 10 == 0:
+        while not self.__stop_event.is_set():  # TODO maybe parse workout
+            self.__publish(PING_RESPONSE)
+            self.__publish('IDD055' + tohex(m, 4))
+            self.__publish('IDD140' + tohex(s, 4))
+            self.__publish('IDS1E1{0}'.format(int(i / 10) % 60, 2))
+            self.__publish('IDS1E0{0}'.format(int(i % 10), 2))
+            self.__publish('IDS1E2{0}'.format(int(i / 600), 2))
+            if i % 10 == 0:
+                s += 1
                 self.__publish('IDS1A9' + tohex(random.randint(22, 27), 2))
-                if self.__m > 0 and self.__i > 10:
-                    self.__publish('IDD14A' + tohex(int((self.__m / (self.__i / 10)) * 100), 4))
-
-            self.__i = self.__i + 1
-            if self.__i % 2 == 0:
-                self.__m += 1
-
+                if m > 0 and i > 10:
+                    self.__publish('IDD14A' + tohex(int((m / (i / 10)) * 100), 4))
+                self.__publish('IDD1A0' + tohex(random.randint(80, 140), 4))
+            if i % 2 == 0:
+                m += 1
+            i += 1
             self.__stop_event.wait(0.1)
         logging.info("stopped generating")
 
@@ -74,14 +79,16 @@ class FakeS4(object):
         return self.__queue.get()
 
     def write(self, s):
+        if s.strip() == MODEL_INFORMATION_REQUEST:
+            self.__publish(MODEL_INFORMATION_RESPONSE + '40200')
+        if s[3:6] == '0A9':
+            self.__publish('IDS0A9' + tohex(180, 2))
         if s[:2] == 'WS':
             self.__workout_event.set()
-        if s.strip() == 'RESET':
+        if s.strip() == RESET_REQUEST:
             self.close()
-            time.sleep(0.2) # sleep cos i re-use the stop_event
+            time.sleep(0.2)  # sleep cos stop_event re-use
             self.__queue.queue.clear()
-            self.__i = 0
-            self.__m = 0
             self.start_publishing()
 
     def flush(self):

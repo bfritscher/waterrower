@@ -47,8 +47,17 @@ dashboard = (function($) {
         },
         stroke_end: function(data) {
             console.log(data);
+        },
+        model: function(data){
+            $('#model').text(data.raw);
+        },
+        tank_volume: function(data){
+            $('#tank_volume').text(data.value/10 + 'L');
+        },
+        heart_rate: function(data){
+            $('#heart_rate').text(data.value);
         }
-    }
+    };
 
     function updatePolar() {
         var data = [];
@@ -111,33 +120,34 @@ dashboard = (function($) {
     }
 
     function init() {
-        ws = new WebSocket('ws://' +document.location.host +'/ws');
-        //ReconnectingWebSocket('ws://' + document.location.host + '/ws');
+        ws = new ReconnectingWebSocket('ws://' +document.location.host +'/ws');
         ws.onopen = onopen;
         ws.onclose = onclose;
         ws.onmessage = onmessage;
         ws.onerror = onerror;
+        timerId = setInterval(updatePolar, 100);
+
         $('#workout-begin').click(function() {
             data = [];
             workoutDistance = parseInt($('#workout-distance').val());
             if (!isNaN(workoutDistance)) {
                 polar.reset();
-                timerId = setInterval(updatePolar, 100);
+
                 var msg = JSON.stringify({type: 'workout-begin', distance: workoutDistance});
                 ws.send(msg);
             }
             return false;
         });
+
         $('#workout-end').click(function() {
             var msg = JSON.stringify({type: 'workout-end'});
             console.log('sending:', msg);
             ws.send(msg);
-            clearInterval(timerId);
             return false;
         });
     }
 
     return {
         init: init
-    }
+    };
 })(jQuery);

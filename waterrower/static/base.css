@@ -68,6 +68,12 @@ dl#clock dd, dl#split dd {
     right: 10px;
 }
 
+#version {
+    position: absolute;
+    top: 30px;
+    right: 10px;
+}
+
 #status.not-connected {
     color: #fc0;
 }

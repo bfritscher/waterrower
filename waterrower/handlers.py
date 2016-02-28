@@ -3,9 +3,11 @@ import tornado.web
 import logging
 import json
 
+
 class TemplateHandler(tornado.web.RequestHandler):
-    def get(self, template):
+    def get(self, template='index.html'):
         self.render(template)
+
 
 class DashboardWebsocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, rower_interface):
@@ -13,8 +15,8 @@ class DashboardWebsocketHandler(tornado.websocket.WebSocketHandler):
 
     def open(self):
         logging.info("opened ws connection")
-        if not self._rower_interface.is_connected():
-            self._rower_interface.register_callback(self.on_rower_event)
+        self._rower_interface.register_callback(self.on_rower_event)
+        self._rower_interface.request_info()
 
     def on_message(self, message):
         logging.info("message from client: " + message)
@@ -36,4 +38,4 @@ class DashboardWebsocketHandler(tornado.websocket.WebSocketHandler):
         self._rower_interface.remove_callback(self.on_rower_event)
 
     def on_rower_event(self, event):
-        self.write_message(event);
+        self.write_message(event)

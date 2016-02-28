@@ -9,6 +9,10 @@
   <body>
     <div id="content">
       <div id="status" class="not-connected">Not connected</div>
+      <div id="version">
+          <span id="model"></span>
+          <span id="tank_volume"></span>
+      </div>
       <div id="workout-details">
         <label for="workout-distance">Distance (m):</label>
         <input id="workout-distance" type="text" />
@@ -18,6 +22,10 @@
         <button id="workout-end">End</button>
       </div>
       <div id="stats">
+        <dl class="stat stat-small">
+          <dt>heart rate</dt>
+          <dd id="heart_rate">00</dd>
+        </dl>
         <dl class="stat stat-small">
           <dt>total kcal</dt>
           <dd id="total-kcal">0000</dd>

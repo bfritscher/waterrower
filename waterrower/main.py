@@ -21,11 +21,13 @@ define("port", default=8000, help="port to run on", type=int)
 define("demo", default=False, help="stub connection to rower", type=bool)
 define("debug", default=False, help="run in debug mode", type=bool)
 
+
 class Application(tornado.web.Application):
     def __init__(self, rower_interface):
         routes = [
             (r"/ws", handlers.DashboardWebsocketHandler, dict(rower_interface=rower_interface)),
             (r"/(.*.html)", handlers.TemplateHandler),
+            (r"/", handlers.TemplateHandler),
             ]
         settings = {
             'template_path': os.path.join(os.path.dirname(__file__), "templates"),
@@ -33,6 +35,7 @@ class Application(tornado.web.Application):
             'debug': options.debug
             }
         tornado.web.Application.__init__(self, routes, **settings)
+
 
 def ask_for_port():
     print "Choose a port to use:"
@@ -44,6 +47,7 @@ def ask_for_port():
             return path
     result = raw_input()
     return ports[int(result)][0]
+
 
 def connect_to_rower():
     logging.info('connecting to rower')
