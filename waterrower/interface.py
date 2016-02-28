@@ -144,7 +144,7 @@ def event_from(line):
         elif cmd == STROKE_END_RESPONSE:
             return build_event(type='stroke_end', raw=cmd)
         elif cmd == OK_RESPONSE:
-            return build_event(type='ok', raw=cmd)
+            return None
         elif cmd[:2] == MODEL_INFORMATION_RESPONSE:
             return build_event(type='model', raw=cmd)
         elif cmd[:2] == READ_MEMORY_RESPONSE:
@@ -187,6 +187,7 @@ class Rower(object):
 
     def close(self):
         self.write(EXIT_REQUEST)
+        self.notify_callbacks(build_event("exit"))
         if self._stop_event:
             self._stop_event.set()
 
@@ -214,16 +215,26 @@ class Rower(object):
                         self.request_address(address)
                         self._stop_event.wait(0.025)
 
-    def begin_distance_workout(self, distance):
-        units = UNIT_MAP['meters']  # TODO support others in UI
-        hex_distance = hex(distance).split('x')[1].rjust(4, '0')
-        command = 'WSI{0}{1}'.format(units, hex_distance)
+    def begin_workout(self, type, value):
+        if type == WORKOUT_SET_DISTANCE_REQUEST:
+            units = UNIT_MAP['meters']  # TODO support others in UI
+            hex_distance = hex(value).split('x')[1].rjust(4, '0')
+            command = '{0}{1}{2}'.format(WORKOUT_SET_DISTANCE_REQUEST, units, hex_distance)
+        if type == WORKOUT_SET_DURATION_REQUEST:
+            hex_duration = hex(value).split('x')[1].rjust(4, '0')
+            command = '{0}{1}'.format(WORKOUT_SET_DURATION_REQUEST, hex_duration)
+
         logging.info('sending reset and workout command: %s', command)
-        self.write(RESET_REQUEST)
+        self.reset_request()
+        self.notify_callbacks(build_event('workout-start'))
         self.write(command)
 
     def end_workout(self):
+        self.reset_request()
+
+    def reset_request(self):
         self.write(RESET_REQUEST)
+        self.notify_callbacks(build_event('reset'))
 
     def request_info(self):
         self.write(MODEL_INFORMATION_REQUEST)

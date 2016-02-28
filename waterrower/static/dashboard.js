@@ -5,6 +5,25 @@ dashboard = (function($) {
     var ws = null;
     var timerId = null;
     var workoutDistance = 0;
+    var chart;
+    var chartData;
+    var heart_rate = [];
+    var chart_series = {
+        heart_rate: [],
+        stroke_rate: []
+    }
+    var chart_data = [{
+                values: chart_series.heart_rate,
+                key: 'Heart rate',
+                type: 'line',
+                yAxis: 1
+            }, {
+                values: chart_series.stroke_rate,
+                key: 'Stroke rate',
+                type: 'line',
+                yAxis: 2
+            }
+    ];
 
     var messagehandlers = {
         display_sec: function(data) {
@@ -43,10 +62,10 @@ dashboard = (function($) {
             $('#stroke-rate').text(data.value);
         },
         stroke_start: function(data) {
-            console.log(data);
+            //console.log(data);
         },
         stroke_end: function(data) {
-            console.log(data);
+            //console.log(data);
         },
         model: function(data){
             $('#model').text(data.raw);
@@ -56,7 +75,25 @@ dashboard = (function($) {
         },
         heart_rate: function(data){
             $('#heart_rate').text(data.value);
+        },
+        reset: function(data){
+            polar.reset();
+            chart_series.heart_rate.length = 0;
+            chart_series.stroke_rate.length = 0;
+        },
+        'workout-start': function(data){
+
+        },
+        graph: function(data){
+            // Update the SVG with the new data and call chart
+            chart_series.heart_rate.push({x: data.value.elapsed || 0, y: data.value.heart_rate || 0});
+            chart_series.stroke_rate.push({x: data.value.elapsed || 0, y: data.value.stroke_rate || 0});
+
+            chartData.datum(chart_data).transition().duration(500).call(chart);
+            nv.utils.windowResize(chart.update);
+
         }
+
     };
 
     function updatePolar() {
@@ -67,7 +104,7 @@ dashboard = (function($) {
                    index: 0.3});
         var distance = parseInt($('#total-distance-m').text().replace(/^0+/, ''));
         data.push({name: 'm',
-                   value: (!isNaN(distance) && distance > 0) ? distance/workoutDistance : 0,
+                   value: (!isNaN(distance) && distance > 0 && workoutDistance > 0) ? distance/workoutDistance : 0,
                    index: 0.1});
         var mps = parseFloat($("#avg-mps").text());
         data.push({name: 'm/s',
@@ -128,12 +165,22 @@ dashboard = (function($) {
         timerId = setInterval(updatePolar, 100);
 
         $('#workout-begin').click(function() {
-            data = [];
-            workoutDistance = parseInt($('#workout-distance').val());
-            if (!isNaN(workoutDistance)) {
+            var workoutTarget = $('#workout-target').val();
+            var type = $('#workout-type').val();
+            if (!isNaN(workoutTarget) && type) {
+                workoutTarget = parseInt(workoutTarget);
+                if (type === "WSU") {
+                     workoutTarget *= 60;
+                }
+                if (type === "WSI") {
+                    workoutDistance = workoutTarget;
+                }
                 polar.reset();
-
-                var msg = JSON.stringify({type: 'workout-begin', distance: workoutDistance});
+                var msg = JSON.stringify({type: 'workout-begin',
+                    value: {
+                        type: type,
+                        target: workoutTarget
+                    }});
                 ws.send(msg);
             }
             return false;
@@ -141,10 +188,34 @@ dashboard = (function($) {
 
         $('#workout-end').click(function() {
             var msg = JSON.stringify({type: 'workout-end'});
-            console.log('sending:', msg);
             ws.send(msg);
             return false;
         });
+
+        nv.addGraph(function() {
+            chart = nv.models.multiChart()
+                .margin({top: 30, right: 60, bottom: 50, left: 70})
+                .color(d3.scale.category10().range());
+
+                //.showLegend(true)       //Show the legend, allowing users to turn on/off line series.
+                //.showYAxis(true)        //Show the y-axis
+                //.showXAxis(true);
+
+            chart.xAxis.tickFormat(function(d) {
+                var time = Math.round(d/1000);
+                var seconds = time % 60;
+                var minutes = (time - seconds) / 60;
+                return pad(minutes, 2) + ':' + pad(seconds, 2);
+            });
+
+            chartData = d3.select('#chart svg').datum(chart_data);
+            chartData.call(chart);
+
+            //Update the chart when window resizes.
+            nv.utils.windowResize(function() { chart.update() });
+        return chart;
+        });
+
     }
 
     return {

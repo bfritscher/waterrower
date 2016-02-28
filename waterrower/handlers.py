@@ -27,7 +27,7 @@ class DashboardWebsocketHandler(tornado.websocket.WebSocketHandler):
         logging.info('received event: ' + str(event))
         event_type = event.get('type')
         if event_type == 'workout-begin':
-            self._rower_interface.begin_distance_workout(int(event.get('distance')))
+            self._rower_interface.begin_workout(event['value']['type'], int(event['value']['target']))
         elif event_type == 'workout-end':
             self._rower_interface.end_workout()
         else:

@@ -10,7 +10,7 @@ body {
     padding: 20px;
 }
 
-#workout-details input {
+#workout-details input, #workout-details select {
     border: 1px solid #666;
     background: #444;
     color: #fff;
@@ -107,6 +107,10 @@ dl#clock dd, dl#split dd {
     text-align: center;
 }
 
-text {
+#viz text {
     fill: white;
+}
+
+#chart {
+    background-color: white;
 }

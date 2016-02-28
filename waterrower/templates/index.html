@@ -1,6 +1,7 @@
 <html>
   <head>
     <link rel="stylesheet" href="{{ static_url("reset.css") }}" />
+    <link rel="stylesheet" href="{{ static_url("nv.d3.min.css") }}" />
     <link rel="stylesheet" href="{{ static_url("base.css") }}" />
   </head>
   <style>
@@ -14,10 +15,13 @@
           <span id="tank_volume"></span>
       </div>
       <div id="workout-details">
-        <label for="workout-distance">Distance (m):</label>
-        <input id="workout-distance" type="text" />
-        <label for="workout-time">Time (mins):</label>
-        <input id="workout-time" type="text" />
+        <label for="workout-type">Workout:</label>
+        <select id="workout-type">
+            <option value="WSI">Distance (m)</option>
+            <option selected value="WSU">Time (mins)</option>
+        </select>
+        <label for="workout-target">Target:</label>
+        <input id="workout-target" type="number" />
         <button id="workout-begin">Begin</button>
         <button id="workout-end">End</button>
       </div>
@@ -47,10 +51,16 @@
         </dl>
         <div style="clear: both;"></div>
       </div>
-      <div id="viz"></div>
+        <div style="display:flex">
+        <div id="viz"></div>
+        <div id="chart" style="flex-grow: 1;">
+          <svg style="height:500px"> </svg>
+        </div>
+        </div>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-    <script src="{{ static_url("d3.v2.min.js") }}"></script>
+    <script src="{{ static_url("d3.min.js") }}"></script>
+    <script src="{{ static_url("nv.d3.min.js") }}"></script>
     <script src="{{ static_url("reconnecting-websocket.min.js") }}"></script>
     <script src="{{ static_url("graph.js") }}"></script>
     <script src="{{ static_url("dashboard.js") }}"></script>
@@ -58,6 +68,7 @@
       $(function() {
           polar.init();
           dashboard.init();
+
       });
     </script>
   </body>

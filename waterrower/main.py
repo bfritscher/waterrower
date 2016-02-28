@@ -17,6 +17,8 @@ import datetime
 
 from tornado.options import define, options
 
+from logger import DataLogger
+
 define("port", default=8000, help="port to run on", type=int)
 define("demo", default=False, help="stub connection to rower", type=bool)
 define("debug", default=False, help="run in debug mode", type=bool)
@@ -74,6 +76,8 @@ def main():
     tornado.options.parse_command_line()
     rower_interface = connect_to_rower()
     rower_interface.open()
+    #TODO allow to load history of logger?
+    DataLogger(rower_interface)
     cleanup = build_cleanup(rower_interface)
     signal.signal(signal.SIGINT, cleanup)
     http_server = tornado.httpserver.HTTPServer(Application(rower_interface))

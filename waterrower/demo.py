@@ -6,7 +6,7 @@ import logging
 import time
 
 from interface import PING_RESPONSE, RESET_REQUEST, OK_RESPONSE, MODEL_INFORMATION_REQUEST, \
-    MODEL_INFORMATION_RESPONSE
+    MODEL_INFORMATION_RESPONSE, WORKOUT_SET_DURATION_REQUEST, WORKOUT_SET_DISTANCE_REQUEST
 
 
 def tohex(i, size):
@@ -23,6 +23,8 @@ class FakeS4(object):
         self.__thread = None
         self.__workout_event = None
         self.__stop_event = None
+        self.__workout_type = None
+        self.__workout_target = None
 
     def __publish(self, s):
         self.__queue.put(s.upper() + '\r\n')
@@ -81,9 +83,16 @@ class FakeS4(object):
     def write(self, s):
         if s.strip() == MODEL_INFORMATION_REQUEST:
             self.__publish(MODEL_INFORMATION_RESPONSE + '40200')
-        if s[3:6] == '0A9':
+        if s[3:6] == '0A9': # tank_water config
             self.__publish('IDS0A9' + tohex(180, 2))
-        if s[:2] == 'WS':
+        if s[:3] == WORKOUT_SET_DISTANCE_REQUEST:
+            #s[3:4] = unit
+            self.__workout_type = WORKOUT_SET_DISTANCE_REQUEST
+            self.__workout_target = int(s[4:8], 16)
+            self.__workout_event.set()
+        if s[:3] == WORKOUT_SET_DURATION_REQUEST:
+            self.__workout_type = WORKOUT_SET_DURATION_REQUEST
+            self.__workout_target = int(s[3:7], 16)
             self.__workout_event.set()
         if s.strip() == RESET_REQUEST:
             self.close()
