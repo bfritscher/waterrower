@@ -15,7 +15,6 @@ MEMORY_MAP = {'055': {'type': 'total_distance_m', 'size': 'double', 'base': 16},
               '1E3': {'type': 'display_hr', 'size': 'single', 'base': 10},
               # from zone math
               '1A0': {'type': 'heart_rate', 'size': 'double',  'base': 16},
-              '1A2': {'type': 'cmps', 'size': 'double',  'base': 16},
               '1A6': {'type': '500mps', 'size': 'double',  'base': 16},
               '1A9': {'type': 'stroke_rate', 'size': 'single', 'base': 16},
               # explore
@@ -213,7 +212,7 @@ class Rower(object):
                 for address in MEMORY_MAP:
                     if 'not_in_loop' not in MEMORY_MAP[address]:
                         self.request_address(address)
-                        self._stop_event.wait(0.025)
+                self._stop_event.wait(0.025)
 
     def begin_workout(self, type, value):
         if type == WORKOUT_SET_DISTANCE_REQUEST:

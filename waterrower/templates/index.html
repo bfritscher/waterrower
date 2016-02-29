@@ -25,16 +25,28 @@
         <button id="workout-begin">Begin</button>
         <button id="workout-end">End</button>
       </div>
-      <div id="stats">
-        <dl class="stat stat-small">
-          <dt>heart rate</dt>
-          <dd id="heart_rate">00</dd>
+      <div id="stats" style="display:flex">
+          <div style="display: flex;flex-direction: column;">
+          <div>
+              <dl class="stat stat-small">
+          <dt>total strokes</dt>
+          <dd id="total-strokes">0000</dd>
         </dl>
         <dl class="stat stat-small">
           <dt>total kcal</dt>
           <dd id="total-kcal">0000</dd>
         </dl>
-        <dl class="stat stat-small"><dt>stroke rate</dt><dd id="stroke-rate">0</dd></dl>
+          </div>
+          <div>
+              <dl class="stat stat-small"><dt>stroke rate</dt><dd id="stroke-rate">0</dd></dl>
+        <dl class="stat stat-small"><dt>m/s</dt><dd id="avg-mps">0.00</dd></dl>
+                      <dl class="stat stat-small">
+          <dt>heart rate</dt>
+          <dd id="heart_rate">00</dd>
+        </dl>
+
+        </div>
+        </div>
         <dl class="stat stat-large">
           <dt>total m</dt>
           <dd><span id="total-distance-m">00000</span></dd>
@@ -44,12 +56,6 @@
           <dt>total time</dt>
           <dd id="hours">00</dd>:<dd id="minutes">00</dd>:<dd id="seconds">00</dd>.<dd id="millis">0</dd>
         </dl>
-        <dl class="stat stat-small"><dt>m/s</dt><dd id="avg-mps">0.00</dd></dl>
-        <dl class="stat stat-small">
-          <dt>total strokes</dt>
-          <dd id="total-strokes">0000</dd>
-        </dl>
-        <div style="clear: both;"></div>
       </div>
         <div style="display:flex">
         <div id="viz"></div>

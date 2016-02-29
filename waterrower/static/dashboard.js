@@ -5,6 +5,7 @@ dashboard = (function($) {
     var ws = null;
     var timerId = null;
     var workoutDistance = 0;
+    var workoutDuration = 0;
     var chart;
     var chartData;
     var heart_rate = [];
@@ -102,10 +103,25 @@ dashboard = (function($) {
         data.push({name: 's/m',
                    value: (!isNaN(strokeRate) && strokeRate > 0) ? strokeRate/MAX_STROKE_RATE : 0,
                    index: 0.3});
-        var distance = parseInt($('#total-distance-m').text().replace(/^0+/, ''));
-        data.push({name: 'm',
-                   value: (!isNaN(distance) && distance > 0 && workoutDistance > 0) ? distance/workoutDistance : 0,
-                   index: 0.1});
+
+        if (workoutDistance > 0) {
+            var distance = parseInt($('#total-distance-m').text().replace(/^0+/, ''));
+            data.push({
+                name: 'm',
+                value: (!isNaN(distance) && distance > 0) ? distance / workoutDistance : 0,
+                index: 0.1
+            });
+        }
+
+        if (workoutDuration > 0) {
+            var elapsed = workoutDuration - (parseInt($('#clock #seconds').text())
+                + parseInt($('#clock #minutes').text()) * 60 + parseInt($('#clock #hours').text()) * 3600);
+            data.push({
+                name: 's',
+                value: elapsed / workoutDuration,
+                index: 0.1
+            });
+        }
         var mps = parseFloat($("#avg-mps").text());
         data.push({name: 'm/s',
                    value: (!isNaN(mps) && mps > 0) ? mps/MAX_MPS : 0,
@@ -170,7 +186,8 @@ dashboard = (function($) {
             if (!isNaN(workoutTarget) && type) {
                 workoutTarget = parseInt(workoutTarget);
                 if (type === "WSU") {
-                     workoutTarget *= 60;
+                    workoutTarget *= 60;
+                    workoutDuration = workoutTarget;
                 }
                 if (type === "WSI") {
                     workoutDistance = workoutTarget;

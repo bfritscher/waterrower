@@ -82,17 +82,18 @@ class DataLogger(object):
         while not self._stop_event.is_set():
             #TODO keep track of max?
             #TODO keep track of history?
-            #TODO reset to 0 if not received since...
             self._event['time'] = int(round(time.time() * 1000))
             self._event['elapsed'] = self._event['time'] - self._activity['start_time']
-            self._events.append(copy.deepcopy(self._event))
+            event = copy.deepcopy(self._event)
+            self._events.append(event)
             self._rower_interface.notify_callbacks({
                 "type": "graph",
-                "value": self._event,
+                "value": event,
                 "raw": None,
-                "at": self._event['time']
+                "at": event['time']
             })
-            self._stop_event.wait(2)
+            self._event = {}
+            self._stop_event.wait(5)
 
 
 def save_to_google_fit(activity):

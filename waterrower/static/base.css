@@ -114,3 +114,11 @@ dl#clock dd, dl#split dd {
 #chart {
     background-color: white;
 }
+
+.nvd3 g.nv-groups path.nv-line {
+    stroke-width: 5px;
+}
+
+g.nvd3.nv-wrap.nv-axis text {
+    font-size: 1.2em;
+}

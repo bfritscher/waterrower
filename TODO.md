@@ -1,5 +1,4 @@
 - exit button
-- polar for time
 - less command line
 - better layout
 - font graph
