@@ -68,7 +68,7 @@ dashboard = (function($) {
             //console.log(data);
         },
         model: function(data){
-            $('#model').text(data.raw);
+            $('#model').text('S' + data.raw[2] + ' ' + data.raw.slice(3, 5) + '.' + data.raw.slice(5));
         },
         tank_volume: function(data){
             $('#tank_volume').text(data.value/10 + 'L');
