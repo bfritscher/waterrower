@@ -87,9 +87,12 @@ dashboard = (function($) {
         },
         graph: function(data){
             // Update the SVG with the new data and call chart
-            chart_series.heart_rate.push({x: data.value.elapsed || 0, y: data.value.heart_rate || 0});
-            chart_series.stroke_rate.push({x: data.value.elapsed || 0, y: data.value.stroke_rate || 0});
-
+            if(data.value.heart_rate > 0 || chart_series.heart_rate.length > 0) {
+                chart_series.heart_rate.push({x: data.value.elapsed || 0, y: data.value.heart_rate || 0});
+            }
+            if(data.value.stroke_rate > 0 || chart_series.stroke_rate.length > 0){
+                chart_series.stroke_rate.push({x: data.value.elapsed || 0, y: data.value.stroke_rate || 0});
+            }
             chartData.datum(chart_data).transition().duration(500).call(chart);
             nv.utils.windowResize(chart.update);
 

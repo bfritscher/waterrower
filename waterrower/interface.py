@@ -18,8 +18,8 @@ MEMORY_MAP = {'055': {'type': 'total_distance_m', 'size': 'double', 'base': 16},
               '1A6': {'type': '500mps', 'size': 'double',  'base': 16},
               '1A9': {'type': 'stroke_rate', 'size': 'single', 'base': 16},
               # explore
-              '142': {'type': 'avg_time_stroke_whole', 'size': 'single',  'base': 10},
-              '143': {'type': 'avg_time_stroke_pull', 'size': 'single',  'base': 10},
+              '142': {'type': 'avg_time_stroke_whole', 'size': 'single',  'base': 16},
+              '143': {'type': 'avg_time_stroke_pull', 'size': 'single',  'base': 16},
               #other
               '0A9': {'type': 'tank_volume', 'size': 'single',  'base': 16, 'not_in_loop': True},
               }
@@ -212,7 +212,7 @@ class Rower(object):
                 for address in MEMORY_MAP:
                     if 'not_in_loop' not in MEMORY_MAP[address]:
                         self.request_address(address)
-                self._stop_event.wait(0.025)
+                        self._stop_event.wait(0.025)
 
     def begin_workout(self, type, value):
         if type == WORKOUT_SET_DISTANCE_REQUEST:
