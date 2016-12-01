@@ -47,7 +47,7 @@ def build_cleanup(rower_interface):
 
 def main():
     tornado.options.parse_command_line()
-    rower_interface = interface.Rower()
+    rower_interface = interface.Rower(options)
     #TODO allow to load history of logger?
     DataLogger(rower_interface)
     cleanup = build_cleanup(rower_interface)

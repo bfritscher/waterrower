@@ -121,6 +121,7 @@ def find_port():
     ports = serial.tools.list_ports.comports()
     for (i, (path, name, _)) in enumerate(ports):
         if "WR" in name:
+            print "port found: %s" % path
             return path
 
     print "port not found retrying in 5s"
@@ -189,19 +190,19 @@ def event_from(line):
 
 
 class Rower(object):
-    def __init__(self, options):
+    def __init__(self, options=None):
         self._callbacks = set()
         self._request_thread = None
         self._capture_thread = None
         self._stop_event = None
         self._demo = False
-        if options.demo:
+        if options and options.demo:
             from demo import FakeS4
             self._serial = FakeS4()
             self._demo = True
         else:
-            self._serial_port = serial.Serial()
-            self._serial_port.baudrate = 19200
+            self._serial = serial.Serial()
+            self._serial.baudrate = 19200
 
     def is_connected(self):
         return self._serial.isOpen() and is_live_thread(self._request_thread) and \
@@ -209,11 +210,21 @@ class Rower(object):
 
     def _find_serial(self):
         if not self._demo:
-            serial_port.port = ask_for_port()
-        self._serial.open()
+            self._serial.port = find_port()
+        try:
+            self._serial.open()
+            print "serial open"
+        except serial.SerialException as e:
+            print "serial open error waiting"
+            time.sleep(5)
+            self._serial.close()
+            self._find_serial()
+
 
 
     def open(self):
+        if self._serial and self._serial.isOpen():
+            self._serial.close()
         self._stop_event = threading.Event()
         self._find_serial()
         self._request_thread = build_daemon(target=self.start_requesting)
@@ -223,29 +234,33 @@ class Rower(object):
         self.write(USB_REQUEST)
 
     def close(self):
-        self.write(EXIT_REQUEST)
         self.notify_callbacks(build_event("exit"))
         if self._stop_event:
             self._stop_event.set()
-
-        time.sleep(0.1)  # time for capture and request loops to stop running
         if self._serial and self._serial.isOpen():
+            self.write(EXIT_REQUEST)
+            time.sleep(0.1)  # time for capture and request loops to stop running
             self._serial.close()
 
     def write(self, raw):
-        if self._serial and self._serial.isOpen():
+        try:
             self._serial.write(raw.upper() + '\r\n')
             self._serial.flush()
-        else:
+        except:
+            print "Serial error try to reconnect"
             self.open()
 
     def start_capturing(self):
         while not self._stop_event.is_set():
             if self._serial.isOpen():
-                line = self._serial.readline()
-                event = event_from(line)
-                if event:
-                    self.notify_callbacks(event)
+                try:
+                    line = self._serial.readline()
+                    event = event_from(line)
+                    if event:
+                        self.notify_callbacks(event)
+                except Exception as e:
+                    self._serial.reset_input_buffer()
+                    print "could not read %s" % e
 
     def start_requesting(self):
         while not self._stop_event.is_set():
