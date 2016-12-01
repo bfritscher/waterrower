@@ -2,6 +2,8 @@
 import threading
 import logging
 import time
+import serial
+import serial.tools.list_ports
 
 MEMORY_MAP = {'055': {'type': 'total_distance_m', 'size': 'double', 'base': 16},
               '140': {'type': 'total_strokes', 'size': 'double', 'base': 16},
@@ -103,6 +105,29 @@ SIZE_PARSE_MAP = {'single': lambda cmd: cmd[6:8],
                   'triple': lambda cmd: cmd[6:12]}
 
 
+
+def ask_for_port():
+    print "Choose a port to use:"
+    ports = serial.tools.list_ports.comports()
+    for (i, (path, name, _)) in enumerate(ports):
+        print "%s. %s - %s" % (i, path, name)
+        if "WR" in name:
+            print "auto-chosen: %s" % path
+            return path
+    result = raw_input()
+    return ports[int(result)][0]
+
+def find_port():
+    ports = serial.tools.list_ports.comports()
+    for (i, (path, name, _)) in enumerate(ports):
+        if "WR" in name:
+            return path
+
+    print "port not found retrying in 5s"
+    time.sleep(5)
+    return find_port()
+
+
 def build_daemon(target):
     t = threading.Thread(target=target)
     t.daemon = True
@@ -164,20 +189,33 @@ def event_from(line):
 
 
 class Rower(object):
-    def __init__(self, serial):
+    def __init__(self, options):
         self._callbacks = set()
         self._request_thread = None
         self._capture_thread = None
         self._stop_event = None
-        self._serial = serial
+        self._demo = False
+        if options.demo:
+            from demo import FakeS4
+            self._serial = FakeS4()
+            self._demo = True
+        else:
+            self._serial_port = serial.Serial()
+            self._serial_port.baudrate = 19200
 
     def is_connected(self):
         return self._serial.isOpen() and is_live_thread(self._request_thread) and \
             is_live_thread(self._capture_thread)
 
+    def _find_serial(self):
+        if not self._demo:
+            serial_port.port = ask_for_port()
+        self._serial.open()
+
+
     def open(self):
         self._stop_event = threading.Event()
-        self._serial.open()
+        self._find_serial()
         self._request_thread = build_daemon(target=self.start_requesting)
         self._capture_thread = build_daemon(target=self.start_capturing)
         self._request_thread.start()
@@ -195,8 +233,11 @@ class Rower(object):
             self._serial.close()
 
     def write(self, raw):
-        self._serial.write(raw.upper() + '\r\n')
-        self._serial.flush()
+        if self._serial and self._serial.isOpen():
+            self._serial.write(raw.upper() + '\r\n')
+            self._serial.flush()
+        else:
+            self.open()
 
     def start_capturing(self):
         while not self._stop_event.is_set():
