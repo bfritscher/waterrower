@@ -2,3 +2,4 @@
 - less command line
 - better layout
 - font graph
+- disable fit upload in demo mode?

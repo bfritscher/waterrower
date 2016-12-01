@@ -8,21 +8,21 @@ MEMORY_MAP = {'055': {'type': 'total_distance_m', 'size': 'double', 'base': 16},
               '088': {'type': 'watts', 'size': 'double', 'base': 16},
               '08A': {'type': 'total_kcal', 'size': 'triple', 'base': 16},
               '14A': {'type': 'avg_distance_cmps', 'size': 'double', 'base': 16},
-              '148': {'type': 'total_speed_cmps','size': 'double', 'base': 16},
+              '148': {'type': 'total_speed_cmps', 'size': 'double', 'base': 16},
               '1E0': {'type': 'display_sec_dec', 'size': 'single', 'base': 10},
               '1E1': {'type': 'display_sec', 'size': 'single', 'base': 10},
               '1E2': {'type': 'display_min', 'size': 'single', 'base': 10},
               '1E3': {'type': 'display_hr', 'size': 'single', 'base': 10},
               # from zone math
-              '1A0': {'type': 'heart_rate', 'size': 'double',  'base': 16},
-              '1A6': {'type': '500mps', 'size': 'double',  'base': 16},
+              '1A0': {'type': 'heart_rate', 'size': 'double', 'base': 16},
+              '1A6': {'type': '500mps', 'size': 'double', 'base': 16},
               '1A9': {'type': 'stroke_rate', 'size': 'single', 'base': 16},
               # explore
-              '142': {'type': 'avg_time_stroke_whole', 'size': 'single',  'base': 16},
-              '143': {'type': 'avg_time_stroke_pull', 'size': 'single',  'base': 16},
+              '142': {'type': 'avg_time_stroke_whole', 'size': 'single', 'base': 16},
+              '143': {'type': 'avg_time_stroke_pull', 'size': 'single', 'base': 16},
               #other
-              '0A9': {'type': 'tank_volume', 'size': 'single',  'base': 16, 'not_in_loop': True},
-              }
+              '0A9': {'type': 'tank_volume', 'size': 'single', 'base': 16, 'not_in_loop': True},
+             }
 
 
 # ACH values = Ascii coded hexadecimal
@@ -37,7 +37,7 @@ ERROR_RESPONSE = "ERROR"           # Unknown packet
 PING_RESPONSE = "PING"             # Ping
 RESET_REQUEST = "RESET"            # Request the rowing computer to reset, disable interactive mode
 MODEL_INFORMATION_REQUEST = "IV?"  # Request Model Information
-MODEL_INFORMATION_RESPONSE = "IV"  # Current model information IV + Model + Version High + Version Low
+MODEL_INFORMATION_RESPONSE = "IV"  # Current model information IV+Model+Version High+Version Low
 READ_MEMORY_REQUEST = "IR"         # Read a memory location IR+(S=Single,D=Double,T=Triple) + XXX
 READ_MEMORY_RESPONSE = "ID"        # Value from a memory location ID +(type) + Y3 Y2 Y1
 STROKE_START_RESPONSE = "SS"       # Start of stroke
