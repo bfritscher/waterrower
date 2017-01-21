@@ -192,9 +192,7 @@ def event_from(line):
 class Rower(object):
     def __init__(self, options=None):
         self._callbacks = set()
-        self._request_thread = None
-        self._capture_thread = None
-        self._stop_event = None
+        self._stop_event = threading.Event()
         self._demo = False
         if options and options.demo:
             from demo import FakeS4
@@ -203,6 +201,11 @@ class Rower(object):
         else:
             self._serial = serial.Serial()
             self._serial.baudrate = 19200
+
+        self._request_thread = build_daemon(target=self.start_requesting)
+        self._capture_thread = build_daemon(target=self.start_capturing)
+        self._request_thread.start()
+        self._capture_thread.start()
 
     def is_connected(self):
         return self._serial.isOpen() and is_live_thread(self._request_thread) and \
@@ -220,17 +223,16 @@ class Rower(object):
             self._serial.close()
             self._find_serial()
 
-
-
     def open(self):
         if self._serial and self._serial.isOpen():
             self._serial.close()
-        self._stop_event = threading.Event()
         self._find_serial()
-        self._request_thread = build_daemon(target=self.start_requesting)
-        self._capture_thread = build_daemon(target=self.start_capturing)
-        self._request_thread.start()
-        self._capture_thread.start()
+        if self._stop_event.is_set():
+            self._stop_event.clear()
+            self._request_thread = build_daemon(target=self.start_requesting)
+            self._capture_thread = build_daemon(target=self.start_capturing)
+            self._request_thread.start()
+            self._capture_thread.start()
         self.write(USB_REQUEST)
 
     def close(self):
