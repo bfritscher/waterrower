@@ -163,7 +163,7 @@ def read_reply(cmd):
 
 def event_from(line):
     try:
-        cmd = line.strip()
+        cmd = line.strip().decode()
         if cmd == STROKE_START_RESPONSE:
             return build_event(type='stroke_start', raw=cmd)
         elif cmd == STROKE_END_RESPONSE:
@@ -248,7 +248,7 @@ class Rower(object):
 
     def write(self, raw):
         try:
-            self._serial.write(raw.upper() + '\r\n')
+            self._serial.write(("%s\r\n" % raw.upper()).encode())
             self._serial.flush()
         except Exception as e:
             print(e)
