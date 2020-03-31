@@ -1,5 +1,7 @@
 json/*.json
-
+lib/
+pyvenv.cfg
+.vscode/
 #################
 ## IDEA
 #################

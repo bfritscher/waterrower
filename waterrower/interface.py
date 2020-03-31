@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 import threading
 import logging
 import time
 import serial
 import serial.tools.list_ports
+import asyncio
 
 MEMORY_MAP = {'055': {'type': 'total_distance_m', 'size': 'double', 'base': 16},
               '140': {'type': 'total_strokes', 'size': 'double', 'base': 16},
@@ -107,24 +107,24 @@ SIZE_PARSE_MAP = {'single': lambda cmd: cmd[6:8],
 
 
 def ask_for_port():
-    print "Choose a port to use:"
+    print("Choose a port to use:")
     ports = serial.tools.list_ports.comports()
     for (i, (path, name, _)) in enumerate(ports):
-        print "%s. %s - %s" % (i, path, name)
+        print("%s. %s - %s" % (i, path, name))
         if "WR" in name:
-            print "auto-chosen: %s" % path
+            print("auto-chosen: %s" % path)
             return path
-    result = raw_input()
+    result = input()
     return ports[int(result)][0]
 
 def find_port():
     ports = serial.tools.list_ports.comports()
     for (i, (path, name, _)) in enumerate(ports):
         if "WR" in name:
-            print "port found: %s" % path
+            print("port found: %s" % path)
             return path
 
-    print "port not found retrying in 5s"
+    print("port not found retrying in 5s")
     time.sleep(5)
     return find_port()
 
@@ -197,6 +197,7 @@ class Rower(object):
         if options and options.demo:
             from demo import FakeS4
             self._serial = FakeS4()
+            self._serial.open()
             self._demo = True
         else:
             self._serial = serial.Serial()
@@ -216,9 +217,9 @@ class Rower(object):
             self._serial.port = find_port()
         try:
             self._serial.open()
-            print "serial open"
+            print("serial open")
         except serial.SerialException as e:
-            print "serial open error waiting"
+            print("serial open error waiting")
             time.sleep(5)
             self._serial.close()
             self._find_serial()
@@ -228,7 +229,7 @@ class Rower(object):
             self._serial.close()
         self._find_serial()
         if self._stop_event.is_set():
-            print "reset threads"
+            print("reset threads")
             self._stop_event.clear()
             self._request_thread = build_daemon(target=self.start_requesting)
             self._capture_thread = build_daemon(target=self.start_capturing)
@@ -250,11 +251,12 @@ class Rower(object):
             self._serial.write(raw.upper() + '\r\n')
             self._serial.flush()
         except Exception as e:
-            print e
-            print "Serial error try to reconnect"
+            print(e)
+            print("Serial error try to reconnect")
             self.open()
 
     def start_capturing(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
         while not self._stop_event.is_set():
             if self._serial.isOpen():
                 try:
@@ -263,16 +265,17 @@ class Rower(object):
                     if event:
                         self.notify_callbacks(event)
                 except Exception as e:
-                    print "could not read %s" % e
+                    print("could not read %s" % e)
                     try:
                         self._serial.reset_input_buffer()
                     except Exception as e2:
-                        print "could not reset_input_buffer %s" % e2
+                        print("could not reset_input_buffer %s" % e2)
 
             else:
                 self._stop_event.wait(0.1)
 
     def start_requesting(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
         while not self._stop_event.is_set():
             if self._serial.isOpen():
                 for address in MEMORY_MAP:

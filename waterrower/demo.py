@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import threading
 import random
-import Queue
+import queue
 import logging
 import time
 
@@ -19,7 +18,7 @@ class FakeS4(object):
     actual S4 rowing interface.
     """
     def __init__(self):
-        self.__queue = Queue.Queue()
+        self.__queue = queue.Queue()
         self.__thread = None
         self.__workout_event = None
         self.__stop_event = None
@@ -101,4 +100,6 @@ class FakeS4(object):
             self.start_publishing()
 
     def flush(self):
+        pass
+    def reset_input_buffer(self):
         pass
